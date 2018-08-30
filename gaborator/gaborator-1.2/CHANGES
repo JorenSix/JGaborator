@@ -1,0 +1,34 @@
+1.2
+
+Add overview documentation.
+
+Add real-time FAQ.
+
+Actually include version.h in the release.
+
+Fix off-by-one error in defintion of analyzer constructor ff_min
+argument.
+
+Fix incorrect return value of band_ff() for DC band.
+
+Add streaming example code.
+
+Add analyzer::analysis_support() and analyzer::synthesis_support().
+
+Document analyzer::band_ff().
+
+Improve signal to noise ratio at low numbers of bands per octave.
+
+Note the need for -mfpu=neon on ARM in render.html.
+
+1.1
+
+Added CHANGES file.
+
+Added reference documentation.
+
+New include file gaborator/version.h.
+
+1.0
+
+Initial release
