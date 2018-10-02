@@ -7,6 +7,9 @@ import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
@@ -20,15 +23,20 @@ public class JGaborator implements AudioProcessor{
 	final double minError = 1e-5;//Gaborator library default, exposed here if change is needed
 
 	final double sampleRate;
-	final int blocksize;
-	final int stepSize;
+	final int audioBlockSize;
+	final int frequencyBinTimeStepSize;
 	final int bandsPerOctave;
-
+	final int latency;//processing latency in audio samples
+	
 	final float[] audioDataToTransform;
 	
-	float[][] coefficients;
-	int coefficientOffset;
-
+	private final float[][] coefficients;//circular buffer with current coefficents
+	int coefficientIndexOffset;//The offset (in steps)
+	int mostRecentCoefficentIndex;//The index of the most recent coefficent (in steps)
+	
+	//a history with calculated coefficents
+	private final List<float[]> fixedCoefficents;
+	
 	// Loads the jgaborator library
 	static {
 		// Load native library at runtime
@@ -48,18 +56,23 @@ public class JGaborator implements AudioProcessor{
 	public JGaborator(int blocksize, double samplerate, int bandsPerOctave, double minimumFrequency,
 			double maximumFrequency, double referenceFrequency,int stepSize) {
 		
-		initialize(blocksize, samplerate, bandsPerOctave, minimumFrequency, referenceFrequency, maximumFrequency,
+		latency = initialize(blocksize, samplerate, bandsPerOctave, minimumFrequency, referenceFrequency, maximumFrequency,
 				overlap, minError);
 		this.sampleRate = samplerate;
-		this.blocksize = blocksize;
+		this.audioBlockSize = blocksize;
 		bandcenterCache = bandcenters();
 		firstBandCache = firstBand();
 		
 		audioDataToTransform = new float[blocksize];
-		this.stepSize = stepSize;
+		
+		fixedCoefficents=new ArrayList<float[]>();
+				
+		this.frequencyBinTimeStepSize = stepSize;
 		this.bandsPerOctave = bandsPerOctave;
-		coefficients = new float[(int)(60*samplerate/stepSize)][numberOfBands()];//start with 60seconds
-		coefficientOffset = 0;
+		
+		int coefficentsSize =  (latency + 2*blocksize) / stepSize;
+		coefficients = new float[coefficentsSize][numberOfBands()];
+		coefficientIndexOffset = 0;
 	}
 
 	// Initializes the constant-q transform according to these parameters
@@ -102,28 +115,61 @@ public class JGaborator implements AudioProcessor{
 		// Analyze an audio block
 		float[] analysisResult = analyse(audioData);
 
-		// System.out.println(analysisResult.length);
+		//The analysis result consists of a float array with three values:
+		// a frequency band index [i] (always an integer)
+		// an audio sample index [i+1] (expressed in audio samples)
+		// a magnitude value [i+2] (the magnitude value)
 		for (int i = 0; i < analysisResult.length; i += 3) {
 
-			int audioSample = (int) analysisResult[i + 1];
 			int band = (int) analysisResult[i];
+			int audioSample = (int) analysisResult[i + 1];
+			
 			float coeficcient = analysisResult[i + 2];
 
-			int coefficientIndex = audioSample / stepSize - coefficientOffset;
+			int coefficientIndex = audioSample / frequencyBinTimeStepSize - coefficientIndexOffset;
 			int bandIndex = band - firstBandCache;
 			
-			// Expand the coefficent array if no more place is available (double the size)
-			if(coefficientIndex >= coefficients.length) {				
-				float[][] moreCoefficents = new float[coefficients.length + coefficients.length][coefficients[0].length];
-				System.arraycopy(coefficients, 0, moreCoefficents, 0, coefficients.length);
-				coefficients = moreCoefficents;
-			}
+			int circularIndex = coefficientIndex % coefficients.length;
 			
 			// The first results have a negative audio sample index
-						// ignore these
-			if (coefficientIndex > 0 &&  bandIndex < coefficients[coefficientIndex].length )
-				coefficients[coefficientIndex][bandIndex] = Math.max(coefficients[coefficientIndex][bandIndex], coeficcient);
+			// ignore these
+			if(coefficientIndex > 0 && bandIndex < coefficients[circularIndex].length ) {
+				
+				
+				// If a new index is reached, save the old (fixed) coefficents in the history
+				// Fill the array with zeros to get the max
+				if(coefficientIndex > mostRecentCoefficentIndex && coefficientIndex > coefficients.length) {
+					// keep the new maximum
+					mostRecentCoefficentIndex = coefficientIndex;
+					// copy the oldest data to the history
+					fixedCoefficents.add(coefficients[circularIndex].clone());
+					// fill the oldest with zeros
+					Arrays.fill(coefficients[circularIndex], 0.0f);
+				}
+				// due to reduction in precision (from audio sample accuracy to steps) multiple 
+				// magnitudes could be placed in the same stepIndex, bandIndex pair.
+				// We take the maximum magnitudes value. 
+				coefficients[circularIndex][bandIndex] = Math.max(coefficients[circularIndex][bandIndex], coeficcient);
+			}
+				
 		}
+	}
+	
+	public List<float[]> getCoefficents() {
+		ArrayList<float[]> fixedCoefficentsCopy = new ArrayList<>(fixedCoefficents);
+		
+		/*Goes from a sparse array to a filled array 
+		for(int i = 1 ; i < fixedCoefficentsCopy.size() ; i++) {
+			for(int j = 0 ; j < fixedCoefficentsCopy.get(i).length; j++) {
+				if(fixedCoefficentsCopy.get(i)[j] == 0) {
+					fixedCoefficentsCopy.get(i)[j] = fixedCoefficentsCopy.get(i-1)[j];
+				}
+			}
+		}
+		*/
+		
+		fixedCoefficents.clear();
+		return fixedCoefficentsCopy;
 	}
 
 	/**
@@ -144,7 +190,7 @@ public class JGaborator implements AudioProcessor{
 		audioFileDataBytes.order(ByteOrder.LITTLE_ENDIAN);
 		FloatBuffer audioFileData = audioFileDataBytes.asFloatBuffer();
 
-		for (int floatIndex = 0; floatIndex < fileContents.length / 4 - blocksize; floatIndex += blocksize) {
+		for (int floatIndex = 0; floatIndex < fileContents.length / 4 - audioBlockSize; floatIndex += audioBlockSize) {
 			audioFileData.get(audioDataToTransform);
 			gaborTransform(audioDataToTransform);
 		}
@@ -161,20 +207,14 @@ public class JGaborator implements AudioProcessor{
 
 	@Override
 	public void processingFinished() {
-		//Goes from a sparse array to a filled array 
-		for(int i = 1 ; i < coefficients.length ; i++) {
-			for(int j = 0 ; j < coefficients[i].length; j++) {
-				if(coefficients[i][j] == 0) {
-					coefficients[i][j] = coefficients[i-1][j];
-				}
-			}
-		}
+		//TODO: copy the final coefficents to the history arrayList
+	
 		release();
 	}
 	
 
 	public int getStepSize() {
-		return stepSize;
+		return frequencyBinTimeStepSize;
 	}
 
 	public float getSampleRate() {
@@ -188,9 +228,9 @@ public class JGaborator implements AudioProcessor{
 		return  1200.0f/(float) bandsPerOctave;
 	}
 
-	public float[][] getCoefficents() {
-		return coefficients;
+	public int getLatency() {
+		return latency;
+		
 	}
-
 	
 }

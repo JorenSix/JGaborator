@@ -2,6 +2,7 @@ package be.ugent.jgaborator.ui;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.List;
 
 import be.tarsos.dsp.ui.Axis;
 import be.tarsos.dsp.ui.CoordinateSystem;
@@ -13,7 +14,7 @@ public class GaborLayer implements Layer {
 	
 	private final CoordinateSystem cs;
 	
-	float[][] coefficents;
+	List<float[]> coefficents;
 	JGaborator jgaborator;
 	
 	
@@ -26,8 +27,8 @@ public class GaborLayer implements Layer {
 	
 	private float maxInRegion(int timeIndex) {
 		float currentMax = -10;
-		for(int i = Math.max(timeIndex - 5,0) ; i < Math.min(timeIndex +5, coefficents.length) ; i++) {
-			float[] magnitudes = coefficents[i];
+		for(int i = Math.max(timeIndex - 5,0) ; i < Math.min(timeIndex +5, coefficents.size()) ; i++) {
+			float[] magnitudes = coefficents.get(i);
     		// draw the pixels
 			for (int j = 0; j < magnitudes.length; j++) {
 				currentMax = Math.max(currentMax, magnitudes[j]);
@@ -52,8 +53,8 @@ public class GaborLayer implements Layer {
 	    
 	    for(int timeInSamples = startTimeInSamples ; timeInSamples <= stopTimeInSamples ; timeInSamples += stepSize) {
 	    	int timeIndex = timeInSamples/stepSize;
-	    	if(timeIndex > 0 && timeIndex < coefficents.length) {
-	    		float[] magnitudes = coefficents[timeIndex];
+	    	if(timeIndex > 0 && timeIndex < coefficents.size()) {
+	    		float[] magnitudes = coefficents.get(timeIndex);
 	    		float maxInRegion = maxInRegion(timeIndex);
 	    		
 	    		// draw the pixels

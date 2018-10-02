@@ -31,7 +31,7 @@
 	</target>
 	
     <target name="create_run_jar" depends="compile">
-        <jar destfile="JGaboratorBrowser.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="JGaborator-0.5.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="be.ugent.jgaborator.ui.JGaboratorBrowser"/>
                 <attribute name="Class-Path" value="."/>
