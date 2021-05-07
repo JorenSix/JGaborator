@@ -8,7 +8,7 @@ all:
 	c++ -std=c++11 -I"gaborator-1.2" -I"pffft" -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux" -fPIC -shared -O3 -ffast-math -DGABORATOR_USE_PFFFT  -o libjgaborator.so jgaborator.cc pffft/pffft.o pffft/fftpack.o	
 
 mac:
-	c++ -std=c++11 -I"gaborator-1.2"  -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/mac" -O3 -ffast-math -DGABORATOR_USE_VDSP  -o libjgaborator.so jgaborator.cc  -framework Accelerate
+	c++ -std=c++11 -I"gaborator-1.2"  -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/darwin" -O3 -ffast-math -DGABORATOR_USE_VDSP  -o libjgaborator.dylib jgaborator.cc  -framework Accelerate
 
 clean: 
 	rm *.so *.class

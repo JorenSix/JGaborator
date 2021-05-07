@@ -131,3 +131,7 @@ JNIEXPORT void JNICALL Java_be_ugent_jgaborator_JGaborator_release(JNIEnv *, job
 	min_band = 0;
  	sample_rate = 0;
 }
+
+int main(){
+   return 0;
+}
