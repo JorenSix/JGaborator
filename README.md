@@ -12,7 +12,7 @@ A spectral visualization tool for sprectral information is part of this package.
 
 ## Using JGaborator
 
-To transcode audio JGaborator uses ffmpeg and Java. Please __install ffmpeg and a Java runtime on your system path__ before trying to use JGaborator. Once this is done simply download the [latest JGaborator version](build/JGaborator-0.6.jar) and double click the JAR file.
+To transcode audio JGaborator uses ffmpeg and Java. Please __install ffmpeg and a Java runtime on your system path__ before trying to use JGaborator. Once this is done simply download the [latest JGaborator version](https://github.com/JorenSix/JGaborator/raw/master/build/JGaborator-0.6.jar) and double click the JAR file.
 
 Or via the command line:
 
