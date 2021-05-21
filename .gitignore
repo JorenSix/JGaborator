@@ -7,4 +7,3 @@ bin
 .classpath
 .project
 .settings/
-build/*.jar
