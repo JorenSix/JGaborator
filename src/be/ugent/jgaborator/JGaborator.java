@@ -13,6 +13,7 @@ import java.util.List;
 
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
+import be.ugent.jgaborator.util.NativeUtils;
 
 public class JGaborator implements AudioProcessor{
 
@@ -40,7 +41,19 @@ public class JGaborator implements AudioProcessor{
 	// Loads the jgaborator library
 	static {
 		// Load native library at runtime
-		System.loadLibrary("jgaborator"); 
+		try {
+			System.loadLibrary("jgaborator"); 
+		}catch (UnsatisfiedLinkError e){
+			System.err.println("Could not load jgaborator JNI library. Will attempt to use a version packed in the JAR archive");
+			System.err.println("  info : " + e.getMessage());
+			try {
+				NativeUtils.loadLibraryFromJar("/jni/" + System.mapLibraryName("jgaborator"));
+				System.err.println("Loaded JNI jgaborator library from JAR archive.");
+			} catch (IOException e1) {
+				
+				e1.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -156,7 +169,8 @@ public class JGaborator implements AudioProcessor{
 	}
 	
 	public List<float[]> getCoefficents() {
-		ArrayList<float[]> fixedCoefficentsCopy = new ArrayList<>(fixedCoefficents);
+		return fixedCoefficents;
+		//ArrayList<float[]> fixedCoefficentsCopy = new ArrayList<>(fixedCoefficents);
 		
 		/*Goes from a sparse array to a filled array 
 		for(int i = 1 ; i < fixedCoefficentsCopy.size() ; i++) {
@@ -168,8 +182,8 @@ public class JGaborator implements AudioProcessor{
 		}
 		*/
 		
-		fixedCoefficents.clear();
-		return fixedCoefficentsCopy;
+		//fixedCoefficents.clear();
+		//return fixedCoefficentsCopy;
 	}
 
 	/**

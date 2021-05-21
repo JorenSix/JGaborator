@@ -31,13 +31,17 @@
 	</target>
 	
     <target name="create_run_jar" depends="compile">
-        <jar destfile="JGaborator-0.5.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="JGaborator-0.6.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="be.ugent.jgaborator.ui.JGaboratorBrowser"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
             <fileset dir="../bin"/>
             <zipfileset excludes="META-INF/*.SF" src="../lib/TarsosDSP-2.4.jar"/>
+        	
+        	
+        	<zipfileset dir="precompiled" includes="libjgaborator.dylib" fullpath="jni/libjgaborator.dylib"/>
+        	<zipfileset dir="precompiled" includes="libjgaborator.so" fullpath="jni/libjgaborator.so"/>
         </jar>
     </target>
 	

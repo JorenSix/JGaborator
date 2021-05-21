@@ -1,7 +1,8 @@
 bin
 *.raw
 *.class
-*.so
+
+*.DS_Store
 
 .classpath
 .project

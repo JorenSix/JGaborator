@@ -69,6 +69,16 @@ public class GaborLayer implements Layer {
 					// only draw the visible frequency range
 					if (centsStartingPoint >= cs.getMin(Axis.Y)
 							&& centsStartingPoint <= cs.getMax(Axis.Y)) {
+						
+						if(magnitudes[i]==0) {
+							for(int prevIndex = 0 ; prevIndex < 10 * stepSize ; prevIndex += 1) {
+								int prevTimeIndex = timeIndex-prevIndex;
+								if( prevTimeIndex >= 0 && prevTimeIndex < coefficents.size() && coefficents.get(prevTimeIndex)[i] != 0) {
+									magnitudes[i]=coefficents.get(prevTimeIndex)[i] * ((100-prevIndex)/100.0f);
+									break;
+								}
+							}
+						}
 					
 						int greyValue = 255 - (int) (magnitudes[i] / maxInRegion  * 255);
 						greyValue = Math.max(0, greyValue);
