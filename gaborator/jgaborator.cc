@@ -78,10 +78,10 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv
 
    std::vector<float> buf(audio_block_c_array,audio_block_c_array + blocksize);
 
-   printf("Data analyis support %lld\n", data->anal_support);
-   printf("Audio block size: %d\n", (int) blocksize);
-   printf("Bands per octave:  %d\n", (int) data->paramsRef->bands_per_octave);
-   printf("t_in:  %lld\n", data->t_in);
+   //printf("Data analyis support %lld\n", data->anal_support);
+   //printf("Audio block size: %d\n", (int) blocksize);
+   //printf("Bands per octave:  %d\n", (int) data->paramsRef->bands_per_octave);
+   //printf("t_in:  %lld\n", data->t_in);
 
    int output_index = 0;
    
@@ -109,11 +109,11 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv
    data->t_in += (int64_t) blocksize;
    
 
-   printf("after apply output_index %d\n", output_index);
-   printf("after apply Data analyis support %lld\n", data->anal_support);
-   printf("after apply Audio block size: %d\n", (int) blocksize);
-   printf("after apply Bands per octave:  %d\n", (int) data->paramsRef->bands_per_octave);
-   printf("after apply t_in:  %lld\n", data->t_in);
+   //printf("after apply output_index %d\n", output_index);
+   //printf("after apply Data analyis support %lld\n", data->anal_support);
+   //printf("after apply Audio block size: %d\n", (int) blocksize);
+   //printf("after apply Bands per octave:  %d\n", (int) data->paramsRef->bands_per_octave);
+   //printf("after apply t_in:  %lld\n", data->t_in);
 
    int64_t t_out = data->t_in - data->anal_support;
    
