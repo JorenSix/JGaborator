@@ -16,7 +16,9 @@ import be.tarsos.dsp.AudioProcessor;
 import be.ugent.jgaborator.util.NativeUtils;
 
 public class JGaborator implements AudioProcessor{
-
+	//this pointer is used to make the JNI calls thread safe
+	public long ptr = 0;
+	
 	final float[] bandcenterCache;
 	final int firstBandCache;
 
