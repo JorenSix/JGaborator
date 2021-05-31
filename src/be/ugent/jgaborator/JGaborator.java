@@ -16,8 +16,6 @@ import be.tarsos.dsp.AudioProcessor;
 import be.ugent.jgaborator.util.NativeUtils;
 
 public class JGaborator implements AudioProcessor{
-	//this pointer is used to make the JNI calls thread safe
-	public long ptr = 0;
 	
 	final float[] bandcenterCache;
 	final int firstBandCache;
@@ -71,11 +69,16 @@ public class JGaborator implements AudioProcessor{
 	public JGaborator(int blocksize, double samplerate, int bandsPerOctave, double minimumFrequency,
 			double maximumFrequency, double referenceFrequency,int stepSize) {
 		
-		latency = initialize(blocksize, samplerate, bandsPerOctave, minimumFrequency, referenceFrequency, maximumFrequency,
+		//System.out.println("init " + Thread.currentThread());
+		latency = doInitialization(blocksize, samplerate, bandsPerOctave, minimumFrequency, referenceFrequency, maximumFrequency,
 				overlap, minError);
+		//System.out.println("after init ");
 		this.sampleRate = samplerate;
 		this.audioBlockSize = blocksize;
-		bandcenterCache = bandcenters();
+		
+		//System.out.println("Band centers ");
+		bandcenterCache = getBandcenters();
+		//System.out.println("After Band centers " + bandcenterCache.length);
 		firstBandCache = firstBand();
 		
 		audioDataToTransform = new float[blocksize];
@@ -93,15 +96,28 @@ public class JGaborator implements AudioProcessor{
 	// Initializes the constant-q transform according to these parameters
 	private native int initialize(int blockSize, double samplerate, int bandsPerOctave, double fMin, double fRef,
 			double fmax, double overlap, double minError);
+	
+	private synchronized int doInitialization(int blockSize, double samplerate, int bandsPerOctave, double fMin, double fRef,
+			double fmax, double overlap, double minError) {
+		return initialize(blockSize,samplerate,bandsPerOctave,fMin,fRef,fmax,overlap,minError);
+	}
 
 	// Analyze a block of audio and get constant-q transform of previous blocks
 	private native float[] analyse(float[] block);
 
 	// Return the center frequencies in Hz for each band
 	private native float[] bandcenters();
+	
+	private synchronized float[] getBandcenters(){
+		return bandcenters();
+	}
 
 	// Release occupied resources
 	private native void release();
+	
+	private synchronized void doRelease() {
+		release();
+	}
 
 	private int numberOfBands() {
 		float[] bandcenters = bandcenterCache;
@@ -126,9 +142,11 @@ public class JGaborator implements AudioProcessor{
 		return bandcenterCache[bandIndex + firstBandCache];
 	}
 	
-	private void gaborTransform(float[] audioData) {
+	private synchronized void gaborTransform(float[] audioData) {
 		// Analyze an audio block
+		//System.out.println("Before analyse " + Thread.currentThread());
 		float[] analysisResult = analyse(audioData);
+		//System.out.println("After analyse");
 
 		//The analysis result consists of a float array with three values:
 		// a frequency band index [i] (always an integer)
@@ -149,7 +167,6 @@ public class JGaborator implements AudioProcessor{
 			// The first results have a negative audio sample index
 			// ignore these
 			if(coefficientIndex > 0 && bandIndex < coefficients[circularIndex].length ) {
-				
 				
 				// If a new index is reached, save the old (fixed) coefficents in the history
 				// Fill the array with zeros to get the max
@@ -223,9 +240,10 @@ public class JGaborator implements AudioProcessor{
 
 	@Override
 	public void processingFinished() {
+		//System.out.println("Release "  + Thread.currentThread());
 		//TODO: copy the final coefficents to the history arrayList
-	
-		release();
+		doRelease();
+		//System.out.println("after Release ");
 	}
 	
 

@@ -5,6 +5,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Random;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -302,12 +303,63 @@ public class JGaboratorBrowser  extends JFrame{
 	
 	
 	public static void main(String[] args) {
-		JFrame frame = null;
-		frame = new JGaboratorBrowser();
-		frame.pack();
-		frame.setSize(800,550);
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
+		if (args.length == 0) {
+			JFrame frame = null;
+			frame = new JGaboratorBrowser();
+			frame.pack();
+			frame.setSize(800,550);
+			frame.setLocationRelativeTo(null);
+			frame.setVisible(true);
+		}else {
+			for(int i = 0 ; i < 2 ; i++) {
+				
+				int index = 0;
+				final boolean singleThreaded = false;
+				for(final String path : args ) {
+					if(!new File(path).exists())
+						continue;
+					
+					index++;
+					final int count = index;
+					final int in = i+1;
+					
+					//start all threads simultaneously
+					Thread t = new Thread(new Runnable() {
+						@Override
+						public void run() {
+							if(!singleThreaded) {
+								try {
+									Thread.sleep((long) (new Random().nextFloat() * 10));
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+							}
+							
+							double minFrequency = 110;
+							double maxFrequency = 3520;
+							double refFrequency = 440;
+							int bandsPerOctave = 12;
+							double sampleRate = 8000;
+							int resolution = 64; 
+							int stepSize = 4096* 2 * 2;
+							
+							System.out.printf("%d %d/%d START %s\n",in, count,args.length,path);
+							
+							final JGaborator zsazsa = new JGaborator(stepSize, sampleRate, bandsPerOctave, minFrequency,maxFrequency,refFrequency,resolution);
+							AudioDispatcher ad = AudioDispatcherFactory.fromPipe(path, (int)sampleRate, stepSize, 0);
+							ad.addAudioProcessor(zsazsa);
+							ad.run();
+							
+							System.out.printf("%d %d/%d STOP %s\n",in,count,args.length,path);
+						}
+					});
+					if(singleThreaded)
+						t.run();
+					else
+						t.start();
+				}
+			}
+		}
 	}
 
 }

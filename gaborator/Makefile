@@ -10,5 +10,9 @@ all:
 mac:
 	c++ -std=c++11 -I"gaborator-1.2"  -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/darwin" -O3 -ffast-math -DGABORATOR_USE_VDSP  -o ../build/precompiled/libjgaborator.dylib jgaborator.cc  -framework Accelerate
 
+mac_dummy:
+	c++ -std=c++11 -I"gaborator-1.2"  -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/darwin" -O3 -ffast-math -DGABORATOR_USE_VDSP  -o ../build/precompiled/libjgaborator.dylib jgaborator_dummy.cc  -framework Accelerate
+
+
 clean: 
 	rm *.so *.class

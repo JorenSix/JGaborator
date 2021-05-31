@@ -1,7 +1,11 @@
 #include "jgaborator.h"
+#include "gaborator-1.2/gaborator/gaborator.h"
+
+#include <unordered_map>
 #include <math.h>
 
-typedef struct GaboratorData {   
+const int C_ARRAY_SIZE = 300000 * 2;
+struct GaboratorState {   
 	gaborator::parameters* paramsRef;
 	gaborator::analyzer<float>* analyzerRef;
 	gaborator::coefs<float>* coefsRef;
@@ -11,52 +15,48 @@ typedef struct GaboratorData {
 	int sample_rate;
 	int64_t anal_support;
 
-   float* cArray;
+   jfloat *cArray;
+};
 
-   jfloatArray jniArray;
-   
-} gaborator_data;
 
-jfieldID getPtrFieldId(JNIEnv * env, jobject obj){
-    static jfieldID ptrFieldId = 0;
-    if (!ptrFieldId){
-        jclass c = env->GetObjectClass(obj);
-        ptrFieldId = env->GetFieldID(c, "ptr", "J");
-        env->DeleteLocalRef(c);
-    }
-    return ptrFieldId;
-}
+std::unordered_map<uintptr_t, uintptr_t> stateMap;
+std::mutex stateMutex;
 
 
 JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * env, jobject object, jint blocksize, jdouble fs, jint bands_per_octave, jdouble ff_min , jdouble ff_ref, jdouble ff_max, jdouble overlap, jdouble max_error){
-	gaborator_data * data =  (gaborator_data *) malloc (sizeof(gaborator_data *));
-	
-	//https://stackoverflow.com/questions/24491965/store-a-c-object-instance-inside-jni-jobject-and-retrieve-later
-	
-	data->paramsRef = new gaborator::parameters(bands_per_octave, ff_min / fs, ff_ref / fs, overlap, max_error);
-	data->analyzerRef = new gaborator::analyzer<float>(*(data->paramsRef));
-	data->coefsRef = new gaborator::coefs<float>(*(data->analyzerRef));
+   
+   std::unique_lock<std::mutex> lck (stateMutex);
+   GaboratorState * state =  new GaboratorState();
+   uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
 
-   data->cArray =  (float *) malloc (sizeof(float) * 130000 * 32);
-	
-	//converts frequency (ff_max) in hertz to the number of bands above the min frequency
-	//the ceil is used to end up at a full band 
-	int interesting_bands = ceil(bands_per_octave * log(ff_max/ff_min)/log(2.0f));
-	
-	//since bands are ordered from high to low we are only interested in lower bands:
-	//fs/2.0 is the nyquist frequency
-	int total_bands = ceil(bands_per_octave * log(fs/2.0/ff_min)/log(2.0f));
-	
-   data->anal_support = (int64_t) ceil(data->analyzerRef->analysis_support());
-	data->min_band = total_bands - interesting_bands;
-	data->sample_rate = (int) fs;
-	data->t_in = 0;
+   state->paramsRef = new gaborator::parameters(bands_per_octave, ff_min / fs, ff_ref / fs, overlap, max_error);
+   state->analyzerRef = new gaborator::analyzer<float>(*(state->paramsRef));
+   state->coefsRef = new gaborator::coefs<float>(*(state->analyzerRef));
 
-   data->jniArray = NULL;
-	//save the pointer and set it as an object instance variable
-	env->SetLongField(object, getPtrFieldId(env, object), (jlong) data);
-	
-	return (int) data->anal_support;
+   //converts frequency (ff_max) in hertz to the number of bands above the min frequency
+   //the ceil is used to end up at a full band 
+   int interesting_bands = ceil(bands_per_octave * log(ff_max/ff_min)/log(2.0f));
+
+   //since bands are ordered from high to low we are only interested in lower bands:
+   //fs/2.0 is the nyquist frequency
+   int total_bands = ceil(bands_per_octave * log(fs/2.0/ff_min)/log(2.0f));
+
+   state->anal_support = (int64_t) ceil(state->analyzerRef->analysis_support());
+   state->min_band = total_bands - interesting_bands;
+   state->sample_rate = (int) fs;
+   state->t_in = 0;
+   state->cArray = new jfloat[C_ARRAY_SIZE];
+
+   
+   uintptr_t state_addresss = reinterpret_cast<uintptr_t>(state);
+   assert(stateMap.count(env_addresss)==0);
+   stateMap[env_addresss] = state_addresss;
+   assert(stateMap.count(env_addresss)==1);
+ 
+
+   assert(state->t_in == 0);
+
+   return (int) state->anal_support;
 }
 
 /*
@@ -66,11 +66,15 @@ JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * e
  */
 JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv * env, jobject obj, jfloatArray audio_block ){
 
-	//get a ref to the data pointer
-   gaborator_data * data = (gaborator_data *) env->GetLongField(obj, getPtrFieldId(env, obj));
+	//get a ref to the state pointer
+   uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
+   assert(stateMap.count(env_addresss)==1);
+   if(stateMap.count(env_addresss)==0){
+      return NULL;
+   }
+   GaboratorState * state = reinterpret_cast<GaboratorState *>(stateMap[env_addresss]);
 
    //
-
    // Step 1: Convert the incoming JNI jintarray to C's jfloat[]
    jfloat *audio_block_c_array = env->GetFloatArrayElements(audio_block, NULL);
    if (NULL == audio_block_c_array) return NULL;
@@ -78,83 +82,86 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv
 
    std::vector<float> buf(audio_block_c_array,audio_block_c_array + blocksize);
 
-   //printf("Data analyis support %lld\n", data->anal_support);
+   //printf("Data analyis support %lld\n", state->anal_support);
    //printf("Audio block size: %d\n", (int) blocksize);
-   //printf("Bands per octave:  %d\n", (int) data->paramsRef->bands_per_octave);
-   //printf("t_in:  %lld\n", data->t_in);
+   //printf("Bands per octave:  %d\n", (int) state->paramsRef->bands_per_octave);
+   //printf("t_in:  %lld\n", state->t_in);
 
    int output_index = 0;
    
-   data->analyzerRef->analyze(buf.data(), data->t_in, data->t_in + blocksize, *(data->coefsRef));
+   state->analyzerRef->analyze(buf.data(), state->t_in, state->t_in + blocksize, *(state->coefsRef));
    
-   int64_t st0 = data->t_in - data->anal_support;
-   int64_t st1 = data->t_in - data->anal_support + blocksize;
- 
+   int64_t st0 = state->t_in - state->anal_support;
+   int64_t st1 = state->t_in - state->anal_support + blocksize;
+
+   
+   
    apply(
-            *data->analyzerRef, 
-            *data->coefsRef,
+            *state->analyzerRef, 
+            *state->coefsRef,
             [&](std::complex<float> coef, int band, int64_t audioSampleIndex ) {
                //ignores everything above the max_band
-               if(band >= data->min_band){
+               if(band >= state->min_band){
                   //printf("%f %d %ld\n",std::abs(coef),band,audioSampleIndex);
-                  data->cArray[output_index++] = band;
-                  data->cArray[output_index++] = audioSampleIndex;
-                  data->cArray[output_index++] = std::abs(coef);
+                  state->cArray[output_index++] = band;
+                  state->cArray[output_index++] = audioSampleIndex;
+                  state->cArray[output_index++] = std::abs(coef);
                   //printf("output_index:  %d\n", output_index++);
                   //output_index++;
                }
             },st0,
             st1);
-  
-   data->t_in += (int64_t) blocksize;
    
-
-   //printf("after apply output_index %d\n", output_index);
-   //printf("after apply Data analyis support %lld\n", data->anal_support);
+   state->t_in += (int64_t) blocksize;
+   
+   //printf("After apply output_index %d\n", output_index);
+   //printf("after apply Data analyis support %lld\n", state->anal_support);
    //printf("after apply Audio block size: %d\n", (int) blocksize);
-   //printf("after apply Bands per octave:  %d\n", (int) data->paramsRef->bands_per_octave);
-   //printf("after apply t_in:  %lld\n", data->t_in);
+   //printf("after apply Bands per octave:  %d\n", (int) state->paramsRef->bands_per_octave);
+   //printf("after apply t_in:  %lld\n", state->t_in);
 
-   int64_t t_out = data->t_in - data->anal_support;
+   int64_t t_out = state->t_in - state->anal_support;
    
-   forget_before(*data->analyzerRef, *data->coefsRef, t_out - blocksize );
+   forget_before(*state->analyzerRef, *state->coefsRef, t_out - blocksize);
   
    //release audio block memory resources
    env->ReleaseFloatArrayElements(audio_block, audio_block_c_array, 0);
+   //env->DeleteLocalRef(audio_block);
+   //printf("out size: %d\n",output_index);
 
-   //see here: https://www3.ntu.edu.sg/home/ehchua/programming/java/JavaNativeInterface.html
-   if(data->jniArray != NULL){
-      //cleanup
-       env->DeleteGlobalRef(data->jniArray);
-   }
-	jfloatArray tempOutputArray = env->NewFloatArray(output_index);
-   data->jniArray = (jfloatArray)env->NewGlobalRef(tempOutputArray);
-   env->SetFloatArrayRegion(data->jniArray, 0 , output_index, data->cArray);  // copy
+   jfloatArray outputArray = env->NewFloatArray(output_index);
+   env->SetFloatArrayRegion(outputArray, 0 , output_index, state->cArray);  // copy
 
-   return data->jniArray;
+
+   //
+
+   return outputArray;
 }
 
 JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_bandcenters(JNIEnv * env, jobject obj){
 
-   //get a ref to the data pointer
-   gaborator_data * data = (gaborator_data *) env->GetLongField(obj, getPtrFieldId(env, obj));
+   uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
+   assert(stateMap.count(env_addresss)==1);
+
+   if(stateMap.count(env_addresss)==0){
+      return NULL;
+   }
+   GaboratorState * state = reinterpret_cast<GaboratorState *>(stateMap[env_addresss]);
    
-   int max_band = data->analyzerRef->bandpass_bands_end();
+   int max_band = state->analyzerRef->bandpass_bands_end();
    float band_centers[max_band+1];
 
    for(int i = 0 ; i < max_band ; i++){
-      if(i<data->min_band){
+      if(i<state->min_band){
          band_centers[i]=-1;
       }else{
-         band_centers[i]=data->analyzerRef->band_ff(i) * data->sample_rate;
+         band_centers[i]=state->analyzerRef->band_ff(i) * state->sample_rate;
       }
    }
 
-   // Convert the C's Native jfloat[] to JNI jfloatarray, and return
-   jfloatArray outJNIArray = env->NewFloatArray(max_band+1);  // allocate
-   //if (NULL == outJNIArray) return NULL;
-   env->SetFloatArrayRegion(outJNIArray, 0 , max_band+1, band_centers);  // copy
-   return outJNIArray;
+   jfloatArray outputArray = env->NewFloatArray(max_band+1);
+   env->SetFloatArrayRegion(outputArray, 0 , max_band+1, band_centers);  // copy
+   return outputArray;
 }
 
 /*
@@ -163,22 +170,29 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_bandcenters(JN
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_be_ugent_jgaborator_JGaborator_release(JNIEnv *env , jobject obj){
-   //get a ref to the data pointer
-   gaborator_data * data = (gaborator_data *) env->GetLongField(obj, getPtrFieldId(env, obj));
-
-
-   if(data->jniArray != NULL){
-      //cleanup
-      env->DeleteGlobalRef(data->jniArray);
-   }
    
+   std::unique_lock<std::mutex> lck (stateMutex);
+
+   uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
+   assert(stateMap.count(env_addresss)==1);
+   if(stateMap.count(env_addresss)==0){
+      return;
+   }
+   GaboratorState * state = reinterpret_cast<GaboratorState *>(stateMap[env_addresss]);
+   
+   assert(stateMap.count(env_addresss)==1);
+   stateMap.erase(env_addresss); 
+   assert(stateMap.count(env_addresss)==0);
 
 	//cleanup memory
-   delete data->cArray;
-	delete data->analyzerRef;
-	delete data->coefsRef;
-	delete data->paramsRef;
-	delete data;
+   //delete state->jniArray;
+   //delete cArray;
+	delete state->analyzerRef;
+	delete state->coefsRef;
+	delete state->paramsRef;
+   delete [] state->cArray;
+
+	delete state;
 }
 
 int main(){

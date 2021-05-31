@@ -4,7 +4,7 @@
 
 #include <memory.h>
 #include <iostream>
-#include "gaborator-1.2/gaborator/gaborator.h"
+
 
 
 #ifndef _Included_be_ugent_jgaborator_JGaborator
