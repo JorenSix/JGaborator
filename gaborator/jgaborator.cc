@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <math.h>
+#include <mutex>
 
 const int C_ARRAY_SIZE = 300000 * 2;
 struct GaboratorState {   
