@@ -16,14 +16,14 @@ struct GaboratorState {
 
 std::unordered_map<uintptr_t, uintptr_t> stateMap;
 
-//std::mutex stateMutex;
+std::mutex stateMutex;
 
 const int C_ARRAY_SIZE = 300000;
 
 JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * env, jobject object, jint blocksize, jdouble fs, jint bands_per_octave, jdouble ff_min , jdouble ff_ref, jdouble ff_max, jdouble overlap, jdouble max_error){
 	
-   // the access to this function is mutually exclusive
-   //std::lock_guard<std::mutex> guard(stateMutex);
+   //Makes sure only one thread writes to the stateMap
+   std::unique_lock<std::mutex> lck (stateMutex);
 
    GaboratorState * state =  new GaboratorState();
    uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
@@ -139,11 +139,8 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_bandcenters(JN
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_be_ugent_jgaborator_JGaborator_release(JNIEnv *env , jobject obj){
-   //get a ref to the data pointer
-   //uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
-   //gaborator_data * data = (gaborator_data *) stateMap[env_addresss];
-	
-   //printf("RELEASE : env: %p data: %p data->block:%d \n",env,data,data->block);
+   //Makes sure only one thread writes to the stateMap
+   std::unique_lock<std::mutex> lck (stateMutex);
    
    uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
    assert(stateMap.count(env_addresss)==1);

@@ -1,6 +1,8 @@
-# JGaborator 
+# JGaborator - High resolution spectral transforms from Java
 
-This library calculates fine grained constant-Q spectral representations of audio signals quickly from Java. The calculation of a [Gabor transform](https://en.wikipedia.org/wiki/Gabor_transform) is done by a C++ library named [Gaborator](http://gaborator.com). A Java native interface (JNI) bridge to the C++ Gaborator is provided here. A combination of Gaborator and a fast FFT library (such as [pfft](https://bitbucket.org/jpommier/pffft)) allows fine grained constant-Q transforms at a rate of about 200 times real-time on moderate hardware.  It can serve as a front-end for several audio processing or MIR applications.
+This library calculates fine grained constant-Q spectral representations of audio signals quickly from Java. The spectral transform can be visualized or further processed in a (Music Information Retrieval) processing chain.
+
+The calculation of a [Gabor transform](https://en.wikipedia.org/wiki/Gabor_transform) is done by a C++ library named [Gaborator](http://gaborator.com). A Java native interface (JNI) bridge to the C++ Gaborator is provided here. A combination of Gaborator and a fast FFT library (such as [pfft](https://bitbucket.org/jpommier/pffft)) allows fine grained constant-Q transforms at a rate of about 200 times real-time on moderate hardware.  
 
 For more information on the Gaborator C++ library by  Andreas Gustafsson, please see the [gaborator.com](http://gaborator.com) website or a talk by the author on the library called [Exploring time-frequency space with the Gaborator](https://www.youtube.com/watch?v=ONJVJBmFiuE)
 
@@ -12,9 +14,9 @@ A spectral visualization tool for sprectral information is part of this package.
 
 ## Using JGaborator
 
-JGaborator depends on Java. Please __install a Java runtime on your system path__ before trying to use JGaborator. Once this is done simply download the [latest JGaborator version](https://github.com/JorenSix/JGaborator/raw/master/build/JGaborator-0.6.jar) and double click the JAR file.
+JGaborator depends on Java. Please __install a Java runtime on your system path__ before trying to use JGaborator. Once this is done simply download the [latest JGaborator version](https://github.com/JorenSix/JGaborator/raw/master/build/JGaborator-0.6.jar) and double click the JAR file. Note that it __only works on (intel) macOS and  (x64) Linux systems__ For other systems you will need to compile the JNI library according to the instructions below.
 
-Or start JGaborator via the command line:
+It is also possible to start JGaborator via the command line:
 
 ~~~~~~~~
 git clone https://github.com/JorenSix/JGaborator
@@ -39,7 +41,7 @@ List<float[]> coefficients = zsazsa.getCoefficents()
 ## Folder structure
 
 * `src` contains the java source files
-* `gaborator` contains the c++ JNI bridge and a makefile
+* `gaborator` contains the C++ JNI bridge and a makefile
   * `gaborator\gaborator-1.2` The gaborator C++ library, licensed under AGPL
   * `gaborator\pfft` the pfft C++ library, licensed under a BSD type license
 * `build` ant build files
@@ -82,12 +84,12 @@ c++ -std=c++11 -I"gaborator-1.2"  -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/inclu
 The makefile contains similar instructions. To compile the mac version call `make mac` If the JAVA_HOME environment variable is not set, run the following before calling `c++`:
 
 ~~~~~~~~
-export JAVA_HOME=$(/usr/libexec/java_home)#optionally set the JAVA_HOME
+export JAVA_HOME=$(/usr/libexec/java_home) #optionally set the JAVA_HOME
 ~~~~~~~~
 
-## Compilation on different platforms
+### Compilation on different platforms
 
-For convenience and to ensure compatibility, both pfft and gaborator code is included in this repository. The pfft library has a BSD license while gaborator has an AGPL license.  
+For convenience and to ensure compatibility, both pfft and gaborator code is included in this repository. The pffft library has a BSD license while gaborator has an AGPL license. With the limited amount of dependencies it should be relatively straightforward to get it to run on Windows or other unsupported platforms.
 
 
 ## License
@@ -95,5 +97,5 @@ In the spirit of the packaged gaborator library this code is also licensed under
 
 #Version
 0.5 2018 Initial release
-0.6 2021 automatic loading of jni library on some platforms
+0.6 2021 automatic loading of JNI library on some platforms. JGaborators is now safe to use from multiple (Java) threads.
 

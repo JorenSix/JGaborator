@@ -5,7 +5,11 @@
 #include <math.h>
 #include <mutex>
 
+//The size of the output array, with typical parameters around 300k 
+//floats are used
 const int C_ARRAY_SIZE = 300000 * 2;
+
+//A structure with the state information
 struct GaboratorState {   
 	gaborator::parameters* paramsRef;
 	gaborator::analyzer<float>* analyzerRef;
@@ -19,14 +23,17 @@ struct GaboratorState {
    jfloat *cArray;
 };
 
-
+//A hash map with a JNIEnv * as key and a GaboratorState * as value
 std::unordered_map<uintptr_t, uintptr_t> stateMap;
+
+//A mutex to ensure that writes to the stateMap are synchronized.
 std::mutex stateMutex;
 
 
 JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * env, jobject object, jint blocksize, jdouble fs, jint bands_per_octave, jdouble ff_min , jdouble ff_ref, jdouble ff_max, jdouble overlap, jdouble max_error){
-   
+   //Makes sure only one thread writes to the stateMap
    std::unique_lock<std::mutex> lck (stateMutex);
+
    GaboratorState * state =  new GaboratorState();
    uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
 
@@ -48,7 +55,6 @@ JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * e
    state->t_in = 0;
    state->cArray = new jfloat[C_ARRAY_SIZE];
 
-   
    uintptr_t state_addresss = reinterpret_cast<uintptr_t>(state);
    assert(stateMap.count(env_addresss)==0);
    stateMap[env_addresss] = state_addresss;
@@ -76,17 +82,12 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv
    GaboratorState * state = reinterpret_cast<GaboratorState *>(stateMap[env_addresss]);
 
    //
-   // Step 1: Convert the incoming JNI jintarray to C's jfloat[]
+   // First Convert the incoming JNI jintarray to C's jfloat[]
    jfloat *audio_block_c_array = env->GetFloatArrayElements(audio_block, NULL);
    if (NULL == audio_block_c_array) return NULL;
    jsize blocksize = env->GetArrayLength(audio_block);
 
    std::vector<float> buf(audio_block_c_array,audio_block_c_array + blocksize);
-
-   //printf("Data analyis support %lld\n", state->anal_support);
-   //printf("Audio block size: %d\n", (int) blocksize);
-   //printf("Bands per octave:  %d\n", (int) state->paramsRef->bands_per_octave);
-   //printf("t_in:  %lld\n", state->t_in);
 
    int output_index = 0;
    
@@ -94,8 +95,6 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv
    
    int64_t st0 = state->t_in - state->anal_support;
    int64_t st1 = state->t_in - state->anal_support + blocksize;
-
-   
    
    apply(
             *state->analyzerRef, 
@@ -114,28 +113,17 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv
             st1);
    
    state->t_in += (int64_t) blocksize;
-   
-   //printf("After apply output_index %d\n", output_index);
-   //printf("after apply Data analyis support %lld\n", state->anal_support);
-   //printf("after apply Audio block size: %d\n", (int) blocksize);
-   //printf("after apply Bands per octave:  %d\n", (int) state->paramsRef->bands_per_octave);
-   //printf("after apply t_in:  %lld\n", state->t_in);
 
    int64_t t_out = state->t_in - state->anal_support;
    
    forget_before(*state->analyzerRef, *state->coefsRef, t_out - blocksize);
   
-   //release audio block memory resources
+   //Release audio block memory resources
    env->ReleaseFloatArrayElements(audio_block, audio_block_c_array, 0);
-   //env->DeleteLocalRef(audio_block);
-   //printf("out size: %d\n",output_index);
 
+   //copy the relevant part of the c array to the output JNI array
    jfloatArray outputArray = env->NewFloatArray(output_index);
-   env->SetFloatArrayRegion(outputArray, 0 , output_index, state->cArray);  // copy
-
-
-   //
-
+   env->SetFloatArrayRegion(outputArray, 0 , output_index, state->cArray);
    return outputArray;
 }
 
@@ -171,7 +159,7 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_bandcenters(JN
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_be_ugent_jgaborator_JGaborator_release(JNIEnv *env , jobject obj){
-   
+   //Makes sure only one thread writes to the stateMap
    std::unique_lock<std::mutex> lck (stateMutex);
 
    uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
@@ -186,8 +174,6 @@ JNIEXPORT void JNICALL Java_be_ugent_jgaborator_JGaborator_release(JNIEnv *env ,
    assert(stateMap.count(env_addresss)==0);
 
 	//cleanup memory
-   //delete state->jniArray;
-   //delete cArray;
 	delete state->analyzerRef;
 	delete state->coefsRef;
 	delete state->paramsRef;
