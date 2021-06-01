@@ -91,11 +91,9 @@ export JAVA_HOME=$(/usr/libexec/java_home) #optionally set the JAVA_HOME
 
 For convenience and to ensure compatibility, both pfft and gaborator code is included in this repository. The pffft library has a BSD license while gaborator has an AGPL license. With the limited amount of dependencies it should be relatively straightforward to get it to run on Windows or other unsupported platforms.
 
-
 ## License
 In the spirit of the packaged gaborator library this code is also licensed under an AGPL license.
 
-#Version
+## Version
 0.5 2018 Initial release
 0.6 2021 automatic loading of JNI library on some platforms. JGaborators is now safe to use from multiple (Java) threads.
-
