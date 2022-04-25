@@ -1,6 +1,7 @@
 package be.ugent.jgaborator;
 
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -47,7 +48,18 @@ public class JGaborator implements AudioProcessor{
 			System.err.println("Could not load jgaborator JNI library. Will attempt to use a version packed in the JAR archive");
 			System.err.println("  info : " + e.getMessage());
 			try {
+
+				String arch = System.getProperty("os.arch");
+
+				try{
+					NativeUtils.loadLibraryFromJar("/jni/" + arch + "/" + System.mapLibraryName("jgaborator"));
+				}catch (FileNotFoundException ex) {
+
+				}
+
 				NativeUtils.loadLibraryFromJar("/jni/" + System.mapLibraryName("jgaborator"));
+			
+				
 				System.err.println("Loaded JNI jgaborator library from JAR archive.");
 			} catch (IOException e1) {
 				

@@ -87,6 +87,8 @@ The makefile contains similar instructions. To compile the mac version call `mak
 export JAVA_HOME=$(/usr/libexec/java_home) #optionally set the JAVA_HOME
 ~~~~~~~~
 
+There is a precompiled version for the M1 (aarch64) platform. 
+
 ### Compilation on different platforms
 
 For convenience and to ensure compatibility, both pfft and gaborator code is included in this repository. The pffft library has a BSD license while gaborator has an AGPL license. With the limited amount of dependencies it should be relatively straightforward to get it to run on Windows or other unsupported platforms.

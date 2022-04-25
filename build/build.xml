@@ -41,6 +41,7 @@
         	
         	
         	<zipfileset dir="precompiled" includes="libjgaborator.dylib" fullpath="jni/libjgaborator.dylib"/>
+        	<zipfileset dir="precompiled" includes="aarch64_libjgaborator.dylib" fullpath="jni/aarch64/libjgaborator.dylib"/>
         	<zipfileset dir="precompiled" includes="libjgaborator.so" fullpath="jni/libjgaborator.so"/>
         </jar>
     </target>
