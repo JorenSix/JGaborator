@@ -1,6 +1,6 @@
 # JGaborator - High resolution spectral transforms from Java
 
-This library calculates fine grained constant-Q spectral representations of audio signals quickly from Java. The spectral transform can be visualized or further processed in a (Music Information Retrieval) processing chain.
+This library calculates fine-grained constant-Q spectral representations of audio signals quickly from Java. The spectral transform can be visualized or further processed in a (Music Information Retrieval) processing chain.
 
 The calculation of a [Gabor transform](https://en.wikipedia.org/wiki/Gabor_transform) is done by a C++ library named [Gaborator](http://gaborator.com). A Java native interface (JNI) bridge to the C++ Gaborator is provided here. A combination of Gaborator and a fast FFT library (such as [pfft](https://bitbucket.org/jpommier/pffft)) allows fine grained constant-Q transforms at a rate of about 200 times real-time on moderate hardware.  
 
@@ -8,9 +8,9 @@ For more information on the Gaborator C++ library by  Andreas Gustafsson, please
 
 While the gaborator allows reversible transforms, only a forward transform (from time domain to the spectral domain) is currently supported by JGaborator.
 
-A spectral visualization tool for sprectral information is part of this package. See below for a screenshot: 
+A spectral visualization tool for spectral information is part of this package. See below for a screenshot: 
 
-![JGaborator](build/jgaborator.png "A screenshot of JGaborator in action.")
+![JGaborator](media/jgaborator.png "A screenshot of JGaborator in action.")
 
 ## Using JGaborator
 
@@ -42,10 +42,9 @@ List<float[]> coefficients = zsazsa.getCoefficents()
 
 * `src` contains the java source files
 * `gaborator` contains the C++ JNI bridge and a makefile
-  * `gaborator\gaborator-1.2` The gaborator C++ library, licensed under AGPL
-  * `gaborator\pfft` the pfft C++ library, licensed under a BSD type license
-* `build` ant build files
-* `lib` a Java dependency: the TarsosDSP audio processing library.
+  * `gaborator\gaborator-1.x` The gaborator C++ library, licensed under AGPL
+  * `gaborator\pffft` the pffft c-library, licensed under a BSD type license
+* `media` 
 
 
 ## Compilation and development for JGaborator
@@ -78,7 +77,7 @@ The makefile contains similar instructions.
 On macOS the Apple's vDSP library can be used by defining GABORATOR_USE_VDSP and linking with the Accelerate framework. The following should suffice:
 
 ~~~~~~~~
-c++ -std=c++11 -I"gaborator-1.2"  -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/darwin" -O3 -ffast-math -DGABORATOR_USE_VDSP  -o libjgaborator.so jgaborator.cc  -framework Accelerate
+c++ -std=c++11 -I"gaborator-1.7"  -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/darwin" -O3 -ffast-math -DGABORATOR_USE_VDSP  -o libjgaborator.so jgaborator.cc  -framework Accelerate
 ~~~~~~~~
 
 The makefile contains similar instructions. To compile the mac version call `make mac` If the JAVA_HOME environment variable is not set, run the following before calling `c++`:

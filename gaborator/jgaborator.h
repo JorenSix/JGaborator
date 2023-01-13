@@ -5,8 +5,6 @@
 #include <memory.h>
 #include <iostream>
 
-
-
 #ifndef _Included_be_ugent_jgaborator_JGaborator
 #define _Included_be_ugent_jgaborator_JGaborator
 #ifdef __cplusplus

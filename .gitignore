@@ -4,8 +4,6 @@ bin
 
 *.DS_Store
 
-.classpath
-.project
-.settings/
+build/
 
 *.o

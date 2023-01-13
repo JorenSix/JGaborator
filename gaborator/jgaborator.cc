@@ -1,5 +1,5 @@
 #include "jgaborator.h"
-#include "gaborator-1.2/gaborator/gaborator.h"
+#include "gaborator-1.7/gaborator/gaborator.h"
 
 #include <unordered_map>
 #include <math.h>
