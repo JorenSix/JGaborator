@@ -19,6 +19,7 @@ public class JGaboratorTest {
     @Test
     public void runOnFile(){
         final URL url = ClassLoader.getSystemResource("44.1kHz_440Hz_1s.wav");
+        System.out.println(url);
         try {
             AudioDispatcher adp = AudioDispatcherFactory.fromURL(url,1024,0);
 
