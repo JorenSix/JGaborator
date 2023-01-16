@@ -29,7 +29,7 @@ jobs:
     - name: Build with Gradle
       uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
       with:
-        arguments: build
+        arguments:  --console=plain --no-daemon  build
     - name: Cross-compile with Zig
       uses: goto-bus-stop/setup-zig@v2
     - run: |

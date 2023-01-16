@@ -42,8 +42,7 @@ public class JGaborator implements AudioProcessor{
 	static {
 		// Load native library at runtime
 		try {
-			System.loadLibrary("sjgaborator");
-
+			System.loadLibrary("jgaborator");
 		}catch (UnsatisfiedLinkError e){
 			System.err.println("Could not load 'jgaborator' JNI library. Will attempt to use a precompiled version packed in the JAR archive");
 			try{
