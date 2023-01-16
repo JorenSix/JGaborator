@@ -5,6 +5,7 @@ import be.tarsos.dsp.io.TarsosDSPAudioFloatConverter;
 import be.tarsos.dsp.io.jvm.AudioDispatcherFactory;
 import be.tarsos.dsp.io.jvm.JVMAudioInputStream;
 import be.ugent.jgaborator.JGaborator;
+import be.ugent.jgaborator.util.ZigNativeUtils;
 import org.junit.jupiter.api.Test;
 
 import javax.sound.sampled.AudioFormat;
@@ -19,6 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JGaboratorTest {
+
+
+    @Test
+    public void listResources() throws IOException {
+        List<String> list = ZigNativeUtils.listResourcesAtDirectory("/jni/");
+        System.out.println(list);
+        assertTrue(list.size() > 4);
+    }
     @Test
     public void runOnFile(){
         final float[]  audioSamples = audioBufferFile("44.1kHz_440Hz_1s.wav",44100);
