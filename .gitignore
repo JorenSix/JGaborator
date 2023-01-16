@@ -4,7 +4,9 @@ bin
 
 *.DS_Store
 .gradle
-
+gaborator/*dll
+gaborator/*so
+gaborator/*dylib
 build/
 
 *.o
