@@ -2,8 +2,10 @@
 
 JNI_INCLUDES=-I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/darwin" -I"$(JAVA_HOME)/include/linux" -I"$(JAVA_HOME)/include/win32" -I"$(JAVA_HOME)/include/win64" 
 
-
 all:
+    ruby precompile_for_targets.rb
+
+plain:
 	# Performance can be significantly improved by using a faster FFT library. 
 	# On macOS, you can use the FFT from Apple's vDSP library by defining GABORATOR_USE_VDSP and linking with the Accelerate framework
 	# On Linux and NetBSD, you can use the PFFFT (Pretty Fast FFT) library which is what is done below: 

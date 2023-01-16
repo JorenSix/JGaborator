@@ -49,9 +49,10 @@ List<float[]> coefficients = zsazsa.getCoefficents()
 
 ## Compilation and development for JGaborator
 
-Assuming [Apache Ant](https://ant.apache.org/), a c++ compiler and Java are correctly installed on your system the following set of commands should get you started:
+Zig, Ruby and Java are correctly installed on your system the following set of commands should get you started:
 
 ~~~~~~~~
+echo $JAVA_HOME
 cd gaborator #Go to the jni bridge director
 make # compiles the JNI bridge, call make mac on Mac OS X
 cd ../build # go to the java build directory
@@ -60,6 +61,8 @@ ant # Compiles and  packages the library
 cp ../gaborator/libjgaborator.so . #Copy the jni bridge
 java -Djava.library.path=. -jar JGaborator-0.6.jar #Start the jar file making sure the JNI brige is in the java library path
 ~~~~~~~~
+
+
 
 ### Compilation On Linux
 On Linux the use of the pfft library is advised.  Compilation of the JNI bride on a Linux system with a JDK installed and a correctly set `JAVA_HOME` can take the following form: 
@@ -97,4 +100,7 @@ In the spirit of the packaged gaborator library this code is also licensed under
 
 ## Version
 0.5 2018 Initial release
+
 0.6 2021 automatic loading of JNI library on some platforms. JGaborators is now safe to use from multiple (Java) threads.
+
+0.7 2023 Zig cross-compiler for gaborator. Changed Java build environment to gradle. Maven package. CI. Upgraded gaborator from 1.2 to 1.7. Automatic example file. CLI runner.

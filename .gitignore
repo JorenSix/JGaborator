@@ -3,6 +3,7 @@ bin
 *.class
 
 *.DS_Store
+.gradle
 
 build/
 

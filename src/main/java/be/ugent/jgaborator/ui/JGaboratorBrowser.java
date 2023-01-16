@@ -5,6 +5,10 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Random;
 
 import javax.swing.JButton;
@@ -31,7 +35,6 @@ import be.tarsos.dsp.ui.layers.SelectionLayer;
 import be.tarsos.dsp.ui.layers.TimeAxisLayer;
 import be.tarsos.dsp.ui.layers.ZoomMouseListenerLayer;
 import be.ugent.jgaborator.JGaborator;
-
 
 public class JGaboratorBrowser  extends JFrame{
 	
@@ -73,20 +76,18 @@ public class JGaboratorBrowser  extends JFrame{
 			public void filesDropped( java.io.File[] files ){   
 				for( int i = 0; i < files.length; i++) {   
 					final File fileToAdd = files[i];
-					new Thread(new Runnable(){
-						@Override
-						public void run() {					
-		                	addAudio(fileToAdd.getAbsolutePath());
-						}}).start();
+					new Thread(() -> addAudio(fileToAdd.getAbsolutePath())).start();
                 }
 			}
         });
 		
 		this.add(fingerprintPanel,BorderLayout.CENTER);
 		this.add(controlComponent(),BorderLayout.WEST);
+		final String demoAudioFile = copyExampleFileToDir();
+		if(demoAudioFile!=null) {
+			new Thread(() -> addAudio(demoAudioFile)).start();
+		}
 	}
-	
-
 	
 	public Component controlComponent() {
 		
@@ -216,6 +217,27 @@ public class JGaboratorBrowser  extends JFrame{
 		container.add(new JPanel(),BorderLayout.CENTER);
 		
 		return container;
+	}
+
+	private String copyExampleFileToDir(){
+		String exampleFile = "PianoFlanger.ogg";
+		String tempDir = System.getProperty("java.io.tmpdir");
+		File generatedDir = new File(tempDir, "example_file_" + System.nanoTime());
+		if (!generatedDir.mkdir())
+			return null;
+		File temp = new File(generatedDir, exampleFile);
+		try (InputStream is = JGaboratorBrowser.class.getResourceAsStream("/"+exampleFile)) {
+			Files.copy(is, temp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			temp.delete();
+			return null;
+		} catch (NullPointerException e) {
+			temp.delete();
+			return null;
+		}
+		temp.deleteOnExit();
+
+		return temp.getAbsolutePath();
 	}
 	
 	private void addAudio(final String path){
