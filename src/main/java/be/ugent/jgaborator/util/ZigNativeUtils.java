@@ -24,15 +24,14 @@
 package be.ugent.jgaborator.util;
 
 import java.io.*;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.ProviderNotFoundException;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A simple library class which helps with loading dynamic libraries stored in the
@@ -68,22 +67,71 @@ public class ZigNativeUtils {
      * @throws IOException
      */
     public static void loadLibraryFromJarWithOSDetection(String path) throws IOException{
+
         String[] parts = path.split("/");
         String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
         String folder = path.replace(filename,"");
-        for(String resourceName : listResourcesAtDirectory(folder)){
+        List<String> foundLibraries = new ArrayList<>();
+        try {
+            foundLibraries = listResources("/jni");
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        if(foundLibraries.size() == 0 ){
+            System.err.print("No native JNI libraries found in JAR archive");
+        }
+        for(String resourceName : foundLibraries){
             if(resourceName.contains(filename)){
-                String fullPath = folder + resourceName;
-                System.err.println("Try to load JNI library " + fullPath + " from JAR archive.");
+
+                System.err.println("Try to load JNI library " + resourceName + " from JAR archive.");
                 try{
-                    ZigNativeUtils.loadLibraryFromJar(fullPath);
-                    System.err.println("Native library library " + fullPath + " loaded!");
+                    ZigNativeUtils.loadLibraryFromJar(resourceName);
+                    System.err.println("Native library library " + resourceName + " loaded!");
                     return;
                 }catch (IOException | UnsatisfiedLinkError e){
-                    System.err.println("Failed to load library " + fullPath  + " potentially attempting others.\n" + e.getMessage());
+                    System.err.println("Failed to load library " + resourceName  + " potentially attempting others.\n" + e.getMessage());
                 }
             }
         }
+    }
+
+    public static List<String> listResources(String path) throws URISyntaxException, IOException {
+
+        List<String> filenames = new ArrayList<>();
+
+        URI uri = ZigNativeUtils.class.getResource(path).toURI();
+
+        if (uri.getScheme().equals("jar")) {
+            System.out.println(uri);
+            Path myPath;
+
+            FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+            myPath = fileSystem.getPath(path);
+            Stream<Path> walk = Files.walk(myPath, 1);
+            for (Iterator<Path> it = walk.iterator(); it.hasNext();){
+                filenames.add(it.next().toString());
+            }
+        } else {
+            filenames = listResourcesAtDirectory(path);
+        }
+        Collections.sort(filenames);
+        return filenames;
+    }
+
+
+
+    public static List<String> listResourcesAtDirectory(String path) throws IOException {
+        List<String> filenames = new ArrayList<>();
+        try (InputStream in = new ZigNativeUtils().getClass().getResourceAsStream(path);
+             BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+            String resource;
+            while ((resource = br.readLine()) != null) {
+                filenames.add(path + "/" + resource);
+            }
+        }
+        Collections.sort(filenames);
+        return filenames;
     }
 
 
@@ -145,19 +193,6 @@ public class ZigNativeUtils {
                 temp.deleteOnExit();
             }
         }
-    }
-
-    public static List<String> listResourcesAtDirectory(String path) throws IOException {
-        List<String> filenames = new ArrayList<>();
-        try (InputStream in = new ZigNativeUtils().getClass().getResourceAsStream(path);
-             BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
-            String resource;
-            while ((resource = br.readLine()) != null) {
-                filenames.add(resource);
-            }
-        }
-        Collections.sort(filenames);
-        return filenames;
     }
 
     private static boolean isPosixCompliant() {

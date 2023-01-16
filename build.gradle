@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
@@ -12,6 +14,19 @@ repositories {
         url = "https://mvn.0110.be/releases"
     }
     mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes(
+                "Main-Class": "be.ugent.jgaborator.ui.JGaboratorBrowser",
+                "Build-Version": project.version,
+                "Build-By" : System.properties['user.name'],
+                "Build-Date":  new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
+                'Build-JDK' : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Build-OS'  : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+        )
+    }
 }
 
 dependencies {

@@ -54,12 +54,11 @@ Zig, Ruby and Java are correctly installed on your system the following set of c
 ~~~~~~~~
 echo $JAVA_HOME
 cd gaborator #Go to the jni bridge director
-make # compiles the JNI bridge, call make mac on Mac OS X
+make # compiles the JNI bridge for all platforms
 cd ../build # go to the java build directory
-ant clean # Make sure no compiled files are remaining
-ant # Compiles and  packages the library
-cp ../gaborator/libjgaborator.so . #Copy the jni bridge
-java -Djava.library.path=. -jar JGaborator-0.6.jar #Start the jar file making sure the JNI brige is in the java library path
+./gradlew build # Make sure no compiled files are remaining
+./gradlew shadowJar
+java -jar build/libs/JGaborator-0.7-all.jar #Start the jar file making sure the JNI brige is in the java library path
 ~~~~~~~~
 
 

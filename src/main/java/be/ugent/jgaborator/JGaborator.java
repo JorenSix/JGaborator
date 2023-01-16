@@ -43,14 +43,16 @@ public class JGaborator implements AudioProcessor{
 		// Load native library at runtime
 		try {
 			System.loadLibrary("jgaborator");
-		}catch (UnsatisfiedLinkError e){
-			System.err.println("Could not load 'jgaborator' JNI library. Will attempt to use a precompiled version packed in the JAR archive");
+			System.err.println("Loaded jgaborator library from " +  System.getProperty("java.library.path"));
+		}catch (UnsatisfiedLinkError e ){
+			System.err.println("Could not load 'jgaborator' JNI library. \n Will attempt to use a precompiled version packed in the JAR archive\n" + e.getMessage());
 			try{
 				ZigNativeUtils.loadLibraryFromJarWithOSDetection("/jni/" + System.mapLibraryName("jgaborator"));
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
 		}
+
 	}
 
 
@@ -67,7 +69,8 @@ public class JGaborator implements AudioProcessor{
 	 */
 	public JGaborator(int blocksize, double samplerate, int bandsPerOctave, double minimumFrequency,
 			double maximumFrequency, double referenceFrequency,int stepSize) {
-		
+
+
 		//System.out.println("init " + Thread.currentThread());
 		latency = doInitialization(blocksize, samplerate, bandsPerOctave, minimumFrequency, referenceFrequency, maximumFrequency,
 				overlap, minError);

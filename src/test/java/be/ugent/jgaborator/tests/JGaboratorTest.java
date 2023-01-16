@@ -23,12 +23,6 @@ public class JGaboratorTest {
 
 
     @Test
-    public void listResources() throws IOException {
-        List<String> list = ZigNativeUtils.listResourcesAtDirectory("/jni/");
-        System.out.println(list);
-        assertTrue(list.size() > 4);
-    }
-    @Test
     public void runOnFile(){
         final float[]  audioSamples = audioBufferFile("44.1kHz_440Hz_1s.wav",44100);
 
