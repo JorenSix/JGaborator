@@ -79,8 +79,8 @@ public class ZigNativeUtils {
                     ZigNativeUtils.loadLibraryFromJar(fullPath);
                     System.err.println("Native library library " + fullPath + " loaded!");
                     return;
-                }catch (IOException e){
-                    System.err.println("Failed to load library " + fullPath  + " potentially attempting others." );
+                }catch (IOException | UnsatisfiedLinkError e){
+                    System.err.println("Failed to load library " + fullPath  + " potentially attempting others.\n" + e.getMessage());
                 }
             }
         }
