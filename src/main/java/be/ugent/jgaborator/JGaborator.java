@@ -15,25 +15,28 @@ import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
 import be.ugent.jgaborator.util.ZigNativeUtils;
 
+/**
+ * The TarsosDSP audio processor to calculate the Gabor transform.
+ */
 public class JGaborator implements AudioProcessor{
 	
-	final float[] bandcenterCache;
-	final int firstBandCache;
+	private final float[] bandcenterCache;
+	private final int firstBandCache;
 
-	final double overlap = 1.0;//Gaborator library default, exposed here if change is needed
-	final double minError = 1e-5;//Gaborator library default, exposed here if change is needed
+	private final double overlap = 1.0;//Gaborator library default, exposed here if change is needed
+	private final double minError = 1e-5;//Gaborator library default, exposed here if change is needed
 
-	final double sampleRate;
-	final int audioBlockSize;
-	final int frequencyBinTimeStepSize;
-	final int bandsPerOctave;
-	final int latency;//processing latency in audio samples
-	
-	final float[] audioDataToTransform;
+	private final double sampleRate;
+	private final int audioBlockSize;
+	private final int frequencyBinTimeStepSize;
+	private final int bandsPerOctave;
+	private final int latency;//processing latency in audio samples
+
+	private final float[] audioDataToTransform;
 	
 	private final float[][] coefficients;//circular buffer with current coefficents
-	int coefficientIndexOffset;//The offset (in steps)
-	int mostRecentCoefficentIndex;//The index of the most recent coefficent (in steps)
+	private int coefficientIndexOffset;//The offset (in steps)
+	private int mostRecentCoefficentIndex;//The index of the most recent coefficent (in steps)
 	
 	//a history with calculated coefficents
 	private final List<float[]> fixedCoefficents;
@@ -46,11 +49,7 @@ public class JGaborator implements AudioProcessor{
 			System.err.println("Loaded jgaborator library from " +  System.getProperty("java.library.path"));
 		}catch (UnsatisfiedLinkError e ){
 			System.err.println("Could not load 'jgaborator' JNI library. \n Will attempt to use a precompiled version packed in the JAR archive\n" + e.getMessage());
-			try{
-				ZigNativeUtils.loadLibraryFromJarWithOSDetection("/jni/" + System.mapLibraryName("jgaborator"));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
+			boolean libraryLoaded = ZigNativeUtils.loadLibraryFromJarWithOSDetection("/jni/" + System.mapLibraryName("jgaborator"));
 		}
 
 	}
@@ -140,6 +139,11 @@ public class JGaborator implements AudioProcessor{
 		return -1;
 	}
 
+	/**
+	 * The center for the frequency band
+	 * @param bandIndex The index of the frequency band.
+	 * @return The frequency of the center place of the band.
+	 */
 	public float bandCenters(int bandIndex) {
 		return bandcenterCache[bandIndex + firstBandCache];
 	}
@@ -185,10 +189,14 @@ public class JGaborator implements AudioProcessor{
 				// We take the maximum magnitudes value. 
 				coefficients[circularIndex][bandIndex] = Math.max(coefficients[circularIndex][bandIndex], coeficcient);
 			}
-				
+
 		}
 	}
-	
+
+	/**
+	 * Return the spectral coefficents.
+	 * @return Return the spectral coefficents.
+	 */
 	public List<float[]> getCoefficents() {
 		return fixedCoefficents;
 		//ArrayList<float[]> fixedCoefficentsCopy = new ArrayList<>(fixedCoefficents);
@@ -247,23 +255,35 @@ public class JGaborator implements AudioProcessor{
 		doRelease();
 		//System.out.println("after Release ");
 	}
-	
 
+	/**
+	 * The step size between in samples.
+	 * @return  The step size between in samples.
+	 */
 	public int getStepSize() {
 		return frequencyBinTimeStepSize;
 	}
 
+	/**
+	 * The audio sample rate
+	 * @return The audio sample rate in Hz
+	 */
 	public float getSampleRate() {
 		return (float)sampleRate;
 	}
 
 	/**
-	 * @return The width of each band in cents.
+	 * The with of each frequency band in cents.
+	 * @return The width of each frequency band in cents.
 	 */
 	public float getBandWidth() {
 		return  1200.0f/(float) bandsPerOctave;
 	}
 
+	/**
+	 * The algorithmic latency in samples
+	 * @return The algorithmic latency in samples
+	 */
 	public int getLatency() {
 		return latency;
 		

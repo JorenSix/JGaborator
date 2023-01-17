@@ -10,14 +10,21 @@ import be.tarsos.dsp.ui.layers.Layer;
 import be.tarsos.dsp.util.PitchConverter;
 import be.ugent.jgaborator.JGaborator;
 
+/**
+ * A graph layer to show gabor magnitudes
+ */
 public class GaborLayer implements Layer {
 	
 	private final CoordinateSystem cs;
 	
-	List<float[]> coefficents;
-	JGaborator jgaborator;
-	
-	
+	private List<float[]> coefficents;
+	private JGaborator jgaborator;
+
+	/**
+	 * Creates a new graph layer with a shared coordinate system.
+	 * @param cs The shared coordinate system.
+	 * @param jgaborator the gabor transform.
+	 */
 	public GaborLayer(CoordinateSystem cs, JGaborator jgaborator) {
 		
 		this.coefficents = jgaborator.getCoefficents();

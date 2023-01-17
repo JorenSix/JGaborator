@@ -3,7 +3,11 @@ import java.text.SimpleDateFormat
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'maven-publish'
 }
+
+sourceCompatibility=11
+targetCompatibility=11
 
 group 'be.ugent.jgaborator'
 version '0.7'
@@ -14,6 +18,11 @@ repositories {
         url = "https://mvn.0110.be/releases"
     }
     mavenCentral()
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 jar {
@@ -39,4 +48,61 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = 'JGaborator'
+                description = 'Fine-grained Spectral transforms in Java'
+                url = 'https://github.com/JorenSix/JGaborator'
+                licenses {
+                    license {
+                        name = 'AGPL'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'JorenSix'
+                        name = 'Joren Six'
+                        email = 'joren.six@ugent.be'
+                    }
+                }
+                scm {
+                    connection = 'https://github.com/JorenSix/JGaborator.git'
+                    developerConnection = 'git@github.com:JorenSix/JGaborator.git'
+                    url = 'https://github.com/JorenSix/JGaborator/'
+                }
+            }
+        }
+    }
+
+    repositories {
+        //Github packages repository. Unfortunately authentication is also needed for public
+        //packages, which limits the use of it altogether.
+        //It is, however, a practical backup...
+        //https://github.com/orgs/community/discussions/26634
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/JorenSix/JGaborator"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+
+        //public, self hosted repository
+        maven {
+            name = "reposilite"
+            url = "https://mvn.0110.be/releases"
+            credentials {
+                username = System.getenv("REPOSILITE_ACTOR")
+                password = System.getenv("REPOSILITE_TOKEN")
+            }
+        }
+    }
 }

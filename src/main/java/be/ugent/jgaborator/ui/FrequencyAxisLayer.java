@@ -17,7 +17,11 @@ import be.tarsos.dsp.ui.layers.LayerUtilities;
  */
 public class FrequencyAxisLayer implements Layer{
 	CoordinateSystem cs;
-	
+
+	/**
+	 * Create a new layer with the shared coordinate system.
+	 * @param cs the shared coordinate system
+	 */
 	public FrequencyAxisLayer(CoordinateSystem cs) {
 		this.cs = cs;
 	}

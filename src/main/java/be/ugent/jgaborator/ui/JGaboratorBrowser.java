@@ -36,6 +36,9 @@ import be.tarsos.dsp.ui.layers.TimeAxisLayer;
 import be.tarsos.dsp.ui.layers.ZoomMouseListenerLayer;
 import be.ugent.jgaborator.JGaborator;
 
+/**
+ * A UI to represent spectral transforms.
+ */
 public class JGaboratorBrowser  extends JFrame{
 	
 	/**
@@ -43,17 +46,49 @@ public class JGaboratorBrowser  extends JFrame{
 	 */
 	private static final long serialVersionUID = 1973676584543780097L;
 
-	private final JPanel fingerprintPanel;
+	/**
+	 * The panel with the graph painted in layers
+	 */
+	private final JPanel graphPanel;
 
+	/**
+	 * The path of the audio file under investigation.
+	 */
 	private String path;
-	
-	private double minFrequency,maxFrequency,refFrequency; //in Hz
+
+	/**
+	 * Min frequency to analyze in Hz
+	 */
+	private double minFrequency;
+	/**
+	 * Max frequency to analyze in Hz
+	 */
+	private double maxFrequency;
+
+	/**
+	 * Ref frequency to center the bins.
+	 */
+	private double refFrequency; //in Hz
+	/**
+	 * The number of frequency bands for each octave
+	 */
 	private int bandsPerOctave;
+	/**
+	 * The audio sample rate in Hz
+	 */
 	private int sampleRate; // in Hz
+	/**
+	 * The time resolution (step size) in audio samples
+	 */
 	private int resolution; //in audio samples
-	private int stepSize;//audio block step size in samples
-	
-	
+	/**
+	 * audio block step size in audio samples
+	 */
+	private int stepSize;//
+
+	/**
+	 * Creates a new UI
+	 */
 	public JGaboratorBrowser() {
 		
 		minFrequency = 110;
@@ -68,11 +103,11 @@ public class JGaboratorBrowser  extends JFrame{
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setTitle("Gaborator Visualizer");
 		
-		fingerprintPanel = new JPanel();
-		fingerprintPanel.setLayout(new GridLayout(0,1));
-		fingerprintPanel.add(emptyFeaturePanel());
+		graphPanel = new JPanel();
+		graphPanel.setLayout(new GridLayout(0,1));
+		graphPanel.add(emptyFeaturePanel());
 		
-		new FileDrop(null, fingerprintPanel, /*dragBorder,*/ new FileDrop.Listener(){   
+		new FileDrop(null, graphPanel, /*dragBorder,*/ new FileDrop.Listener(){
 			public void filesDropped( java.io.File[] files ){   
 				for( int i = 0; i < files.length; i++) {   
 					final File fileToAdd = files[i];
@@ -81,7 +116,7 @@ public class JGaboratorBrowser  extends JFrame{
 			}
         });
 		
-		this.add(fingerprintPanel,BorderLayout.CENTER);
+		this.add(graphPanel,BorderLayout.CENTER);
 		this.add(controlComponent(),BorderLayout.WEST);
 		final String demoAudioFile = copyExampleFileToDir();
 		if(demoAudioFile!=null) {
@@ -89,7 +124,7 @@ public class JGaboratorBrowser  extends JFrame{
 		}
 	}
 	
-	public Component controlComponent() {
+	private Component controlComponent() {
 		
 		JPanel container = new JPanel(new BorderLayout(10,10));
 		container.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -191,9 +226,9 @@ public class JGaboratorBrowser  extends JFrame{
 				Runnable uiRunnable = new Runnable() {
 					@Override
 					public void run() {
-						fingerprintPanel.removeAll();
-						fingerprintPanel.add(emptyFeaturePanel());
-						fingerprintPanel.validate();
+						graphPanel.removeAll();
+						graphPanel.add(emptyFeaturePanel());
+						graphPanel.validate();
 					}
 				};				
 				// run ui stuff on ui thread.
@@ -246,9 +281,9 @@ public class JGaboratorBrowser  extends JFrame{
 		Runnable clearRunnable = new Runnable() {
 			@Override
 			public void run() {
-				fingerprintPanel.removeAll();
-				fingerprintPanel.add(emptyFeaturePanel());
-				fingerprintPanel.validate();
+				graphPanel.removeAll();
+				graphPanel.add(emptyFeaturePanel());
+				graphPanel.validate();
 				//Validating a container means laying out its subcomponents:
 			}
 		};
@@ -271,10 +306,10 @@ public class JGaboratorBrowser  extends JFrame{
 				Runnable clearRunnable = new Runnable() {
 					@Override
 					public void run() {
-						fingerprintPanel.removeAll();
+						graphPanel.removeAll();
 						Component featurePanel = createFeaturePanel(zsazsa);
-						fingerprintPanel.add(featurePanel);
-						fingerprintPanel.validate();
+						graphPanel.add(featurePanel);
+						graphPanel.validate();
 						//Validating a container means laying out its subcomponents:
 					}
 				};
@@ -322,8 +357,11 @@ public class JGaboratorBrowser  extends JFrame{
 		
 		return frequencyDomainPanel;
 	}
-	
-	
+
+	/**
+	 * Start a new UI
+	 * @param args The arguments.
+	 */
 	public static void main(final String[] args) {
 		if (args.length == 0) {
 			JFrame frame = null;

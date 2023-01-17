@@ -1,3 +1,6 @@
+/**
+ * The description of the JGaborator module
+ */
 module JGaborator {
     requires java.desktop;
     requires TarsosDSP.core;

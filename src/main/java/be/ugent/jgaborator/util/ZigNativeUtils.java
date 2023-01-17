@@ -26,11 +26,8 @@ package be.ugent.jgaborator.util;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -48,7 +45,7 @@ public class ZigNativeUtils {
      * The minimum length a prefix for a file has to have according to {@link File#createTempFile(String, String)}}.
      */
     private static final int MIN_PREFIX_LENGTH = 3;
-    public static final String NATIVE_FOLDER_PATH_PREFIX = "zignativeutils";
+    private static final String NATIVE_FOLDER_PATH_PREFIX = "zignativeutils";
 
     /**
      * Temporary directory which will contain the DLLs.
@@ -63,18 +60,20 @@ public class ZigNativeUtils {
 
     /**
      * Load a library with OS and architecture detection. The idea is that libraries are found
-     * @param path
-     * @throws IOException
+     *
+     * @param path the path for the libraries
+     * @return True if the library is loaded successfully
      */
-    public static void loadLibraryFromJarWithOSDetection(String path) throws IOException{
+    public static boolean loadLibraryFromJarWithOSDetection(String path) {
 
-        String[] parts = path.split("/");
+        String[] parts = path.split(File.separator);
         String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
-        String folder = path.replace(filename,"");
-        List<String> foundLibraries = new ArrayList<>();
+        String folder = path.replace(File.separator + filename,"");
+        List<String> foundLibraries;
+
         try {
-            foundLibraries = listResources("/jni");
-        } catch (URISyntaxException e) {
+            foundLibraries = listResources(folder);
+        } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -88,24 +87,31 @@ public class ZigNativeUtils {
                 try{
                     ZigNativeUtils.loadLibraryFromJar(resourceName);
                     System.err.println("Native library library " + resourceName + " loaded!");
-                    return;
+                    return true;
                 }catch (IOException | UnsatisfiedLinkError e){
                     System.err.println("Failed to load library " + resourceName  + " potentially attempting others.\n" + e.getMessage());
                 }
             }
         }
+        return false;
     }
 
-    public static List<String> listResources(String path) throws URISyntaxException, IOException {
+    /**
+     * Lists all resources in a folder. This works for resources in a JAR or on disk
+     * @param path the path with the last '/' removed
+     * @return An alphabetically ordered list of resources.
+     * @throws URISyntaxException When an incorrect URI format is used
+     * @throws IOException When reading goes wrong.
+     */
+    private static List<String> listResources(String path) throws URISyntaxException, IOException {
 
         List<String> filenames = new ArrayList<>();
 
         URI uri = ZigNativeUtils.class.getResource(path).toURI();
 
         if (uri.getScheme().equals("jar")) {
-            System.out.println(uri);
+            //List the files in the directory for JAR files
             Path myPath;
-
             FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
             myPath = fileSystem.getPath(path);
             Stream<Path> walk = Files.walk(myPath, 1);
@@ -113,26 +119,19 @@ public class ZigNativeUtils {
                 filenames.add(it.next().toString());
             }
         } else {
-            filenames = listResourcesAtDirectory(path);
-        }
-        Collections.sort(filenames);
-        return filenames;
-    }
-
-
-
-    public static List<String> listResourcesAtDirectory(String path) throws IOException {
-        List<String> filenames = new ArrayList<>();
-        try (InputStream in = new ZigNativeUtils().getClass().getResourceAsStream(path);
-             BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
-            String resource;
-            while ((resource = br.readLine()) != null) {
-                filenames.add(path + "/" + resource);
+            //List the files in the resources folder in the IDE / gradle
+            try (InputStream in = new ZigNativeUtils().getClass().getResourceAsStream(path);
+                 BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+                String resource;
+                while ((resource = br.readLine()) != null) {
+                    filenames.add(path +  File.separator + resource);
+                }
             }
         }
         Collections.sort(filenames);
         return filenames;
     }
+
 
 
     /**

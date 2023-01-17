@@ -40,7 +40,7 @@ List<float[]> coefficients = zsazsa.getCoefficents()
 
 ## Folder structure
 
-* `src` contains the java source files
+* `src` contains the Java source files
 * `gaborator` contains the C++ JNI bridge and a makefile
   * `gaborator\gaborator-1.x` The gaborator C++ library, licensed under AGPL
   * `gaborator\pffft` the pffft c-library, licensed under a BSD type license
