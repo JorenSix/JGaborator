@@ -1,4 +1,15 @@
-platforms = ["aarch64-linux-musl","aarch64-windows-gnu","aarch64-macos-gnu","i386-linux-gnu","i386-windows-gnu","riscv64-linux-musl","x86_64-linux-gnu","x86_64-windows-gnu","x86_64-macos-gnu"]
+platforms = [
+"x86_64-linux-gnu",
+"x86_64-windows-gnu",
+"x86_64-macos-gnu",
+"aarch64-macos-gnu",
+"aarch64-linux-gnu",
+"aarch64-linux-musl",
+"aarch64-windows-gnu",
+"i386-linux-gnu",
+"i386-windows-gnu",
+"riscv64-linux-musl",
+]
 
 extensions = {"windows" => "dll","macos" => "dylib","linux"=> "so"}
 basename = "libjgaborator"
