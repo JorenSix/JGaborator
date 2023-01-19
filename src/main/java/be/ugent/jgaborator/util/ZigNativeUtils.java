@@ -62,7 +62,9 @@ public class ZigNativeUtils {
     /**
      * Load a library with OS and architecture detection. The idea is that libraries are found
      *
-     * @param folder the folder of the library with forward slashes
+     * @param folder The folder of the library with forward slashes starting with '/' e.g. '/jni'
+     * @param folder the base name of the library which is then translated to system names gabor is translated
+     *               to gabor.dll on windows or libgabor.dynlib on macOS.
      * @return True if the library is loaded successfully
      */
     public static boolean loadLibraryFromJarWithOSDetection(String folder,String libraryName) {
