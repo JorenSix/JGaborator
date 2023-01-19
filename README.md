@@ -75,6 +75,9 @@ The following code shows how to corss-compile the gaborator library with Zig. In
 
 ~~~~~~~~
 bash
+#wget https://aka.ms/download-jdk/microsoft-jdk-17.0.5-windows-x64.zip
+#unzip microsoft-jdk-17.0.5-windows-x64.zip
+#export JAVA_HOME=`pwd`/jdk-17.0.5+8/
 git clone --depth 1 https://github.com/JorenSix/JGaborator
 cd JGaborator/gaborator
 echo $JAVA_HOME

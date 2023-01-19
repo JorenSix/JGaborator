@@ -23,7 +23,13 @@ clean:
 	rm *.so *.class pfft/*o
 
 zig_windows_example:
-	echo $(JNI_INCLUDES)
+    #wget https://aka.ms/download-jdk/microsoft-jdk-17.0.5-windows-x64.zip
+    #unzip microsoft-jdk-17.0.5-windows-x64.zip
+    #export JAVA_HOME=`pwd`/jdk-17.0.5+8/
+	echo "Make sure to set JAVA_HOME to a windows JDK"
+	echo "  download a windows JDK here https://learn.microsoft.com/en-us/java/openjdk/download"
+	echo "  Current JAVA_HOME is:"
+	echo $(JAVA_HOME)
 	zig cc  -target x86_64-windows-gnu -c -O3 -ffast-math -fPIC pffft/pffft.c -o pffft/pffft.o
 	zig cc  -target x86_64-windows-gnu -c -O3 -ffast-math -fPIC -DFFTPACK_DOUBLE_PRECISION pffft/fftpack.c -o pffft/fftpack.o
 	zig c++ -target x86_64-windows-gnu -I"pffft" -I"gaborator-1.7"  $(JNI_INCLUDES) -O3 -ffast-math -fPIC -DGABORATOR_USE_PFFFT -shared  -o jgaborator.dll jgaborator.cc pffft/fftpack.o pffft/pffft.o
