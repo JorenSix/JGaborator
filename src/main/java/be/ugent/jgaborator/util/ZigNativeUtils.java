@@ -71,6 +71,8 @@ public class ZigNativeUtils {
         String folder = path.replace(File.separator + filename,"");
         List<String> foundLibraries;
 
+        System.err.print("Trying to find libraries ending in " + filename);
+
         try {
             foundLibraries = listResources(folder);
         } catch (URISyntaxException | IOException e) {
