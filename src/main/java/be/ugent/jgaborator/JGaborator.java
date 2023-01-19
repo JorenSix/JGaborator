@@ -49,7 +49,7 @@ public class JGaborator implements AudioProcessor{
 			System.err.println("Loaded jgaborator library from " +  System.getProperty("java.library.path"));
 		}catch (UnsatisfiedLinkError e ){
 			System.err.println("Could not load 'jgaborator' JNI library. \n Will attempt to use a precompiled version packed in the JAR archive\n" + e.getMessage());
-			boolean libraryLoaded = ZigNativeUtils.loadLibraryFromJarWithOSDetection("/jni/" + System.mapLibraryName("jgaborator"));
+			boolean libraryLoaded = ZigNativeUtils.loadLibraryFromJarWithOSDetection("/jni","jgaborator");
 		}
 
 	}

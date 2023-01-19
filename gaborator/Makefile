@@ -24,14 +24,14 @@ clean:
 
 zig_windows_example:
 	echo $(JNI_INCLUDES)
-	zig cc -target x86_64-windows-gnu -c -O3 -ffast-math -fPIC pffft/pffft.c -o pffft/pffft.o
-	zig cc -target x86_64-windows-gnu -c -O3 -ffast-math -fPIC -DFFTPACK_DOUBLE_PRECISION pffft/fftpack.c -o pffft/fftpack.o
-	zig c++ -target x86_64-windows-gnu -I"pffft" -I"gaborator-1.7"  $(JNI_INCLUDES) -shared  -O3 -ffast-math -DGABORATOR_USE_PFFFT  -o libjgaborator.dll jgaborator.cc pffft/pffft.o pffft/fftpack.o
+	zig cc  -target x86_64-windows-gnu -c -O3 -ffast-math -fPIC pffft/pffft.c -o pffft/pffft.o
+	zig cc  -target x86_64-windows-gnu -c -O3 -ffast-math -fPIC -DFFTPACK_DOUBLE_PRECISION pffft/fftpack.c -o pffft/fftpack.o
+	zig c++ -target x86_64-windows-gnu -I"pffft" -I"gaborator-1.7"  $(JNI_INCLUDES) -O3 -ffast-math -fPIC -DGABORATOR_USE_PFFFT -shared  -o jgaborator.dll jgaborator.cc pffft/fftpack.o pffft/pffft.o
 
 zig:
-	zig cc  -target $(ZIG_TARGET_PLATFORM) -c -O3 -ffast-math -fPIC pffft/pffft.c -o pffft/pffft.o
-	zig cc  -target $(ZIG_TARGET_PLATFORM) -c -O3 -ffast-math -fPIC -DFFTPACK_DOUBLE_PRECISION pffft/fftpack.c -o pffft/fftpack.o
-	zig c++ -target $(ZIG_TARGET_PLATFORM) -I"pffft" -I"gaborator-1.7"  $(JNI_INCLUDES)  -shared -O3 -ffast-math -DGABORATOR_USE_PFFFT  -o $(ZIG_OUTPUT_FILE) jgaborator.cc pffft/pffft.o pffft/fftpack.o
+	zig cc  -target $(ZIG_TARGET_PLATFORM)                                               -c -O3 -ffast-math -fPIC  pffft/pffft.c -o pffft/pffft.o
+	zig cc  -target $(ZIG_TARGET_PLATFORM)                                               -c -O3 -ffast-math -fPIC -DFFTPACK_DOUBLE_PRECISION pffft/fftpack.c -o pffft/fftpack.o
+	zig c++ -target $(ZIG_TARGET_PLATFORM) -I"pffft" -I"gaborator-1.7"  $(JNI_INCLUDES)     -O3 -ffast-math -fPIC -shared  -DGABORATOR_USE_PFFFT  -o $(ZIG_OUTPUT_FILE) jgaborator.cc pffft/pffft.o pffft/fftpack.o
 
 
 

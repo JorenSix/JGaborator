@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -61,17 +62,14 @@ public class ZigNativeUtils {
     /**
      * Load a library with OS and architecture detection. The idea is that libraries are found
      *
-     * @param path the path for the libraries
+     * @param folder the folder of the library with forward slashes
      * @return True if the library is loaded successfully
      */
-    public static boolean loadLibraryFromJarWithOSDetection(String path) {
-
-        String[] parts = path.split(File.separator);
-        String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
-        String folder = path.replace(File.separator + filename,"");
+    public static boolean loadLibraryFromJarWithOSDetection(String folder,String libraryName) {
+        String systemLibraryName = System.mapLibraryName(libraryName);
         List<String> foundLibraries;
 
-        System.err.print("Trying to find libraries ending in " + filename);
+        System.err.print("Trying to find libraries in  folder " + folder + " ending in " + systemLibraryName);
 
         try {
             foundLibraries = listResources(folder);
@@ -83,7 +81,7 @@ public class ZigNativeUtils {
             System.err.print("No native JNI libraries found in JAR archive");
         }
         for(String resourceName : foundLibraries){
-            if(resourceName.contains(filename)){
+            if(resourceName.contains(systemLibraryName)){
 
                 System.err.println("Try to load JNI library " + resourceName + " from JAR archive.");
                 try{
@@ -175,6 +173,7 @@ public class ZigNativeUtils {
 
         try (InputStream is = ZigNativeUtils.class.getResourceAsStream(path)) {
             Files.copy(is, temp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            System.err.println("Copied library to " + temp.getAbsolutePath() + " delete after use.");
         } catch (IOException e) {
             temp.delete();
             throw e;

@@ -2,6 +2,9 @@ bin
 *.raw
 *.class
 
+zig-out/
+zig-cache/
+
 *.DS_Store
 .gradle
 gaborator/*dll
