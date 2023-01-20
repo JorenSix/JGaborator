@@ -2,7 +2,7 @@
 
 # JGaborator - High resolution spectral transforms from Java
 
-This library calculates fine-grained constant-Q spectral representations of audio signals quickly from Java. The spectral transform can be visualized or further processed in a Music Information Retrieval or machine learning  processing chain.
+This library calculates fine-grained constant-Q spectral representations of audio signals quickly from Java. The spectral transform can be visualized or further processed in a Music Information Retrieval or machine learning processing chain.
 
 The calculation of a [Gabor transform](https://en.wikipedia.org/wiki/Gabor_transform) is done by a C++ library named [Gaborator](http://gaborator.com). A Java native interface (JNI) bridge to the C++ Gaborator is provided here. A combination of Gaborator and a fast FFT library (such as [pfft](https://bitbucket.org/jpommier/pffft)) allows fine-grained constant-Q transforms at a rate of about 200 times real-time on moderate hardware.  
 
@@ -21,10 +21,8 @@ JGaborator depends on Java. Please __install a Java runtime on your system path_
 It is also possible to start JGaborator via the command line:
 
 ~~~~~~~~
-git clone https://github.com/JorenSix/JGaborator
-cd JGaborator
-./gradlew shadowJar
-java -jar build/libs/JGaborator-0.7-all.jar
+wget https://mvn.0110.be/releases/be/ugent/jgaborator/jgaborator/0.7/jgaborator-0.7-all.jar
+java -jar jgaborator-0.7-all.jar
 ~~~~~~~~
 
 To transform audio from the time domain to the spectral domain and visualize the spectrogram **drag and drop an audio file** to the graph area. The visualizer decodes and resamples encoded audio of almost any kind using [ffmpeg](https://www.ffmpeg.org/). Make sure a recent version is available on your path. If not, install it using your packet manager for example `apt-get install ffmpeg` or `brew install ffmpeg`.
@@ -53,7 +51,7 @@ List<float[]> coefficients = zsazsa.getCoefficents()
 
 ## Compilation and development for JGaborator
 
-Zig, Ruby and Java are correctly installed on your system the following set of commands should get you started:
+If Git, Zig, Ruby and Java are correctly installed on your system the following set of commands should get you started:
 
 ~~~~~~~~
 #check the JAVA_HOME variable
@@ -68,6 +66,8 @@ cd ..
 #Start the jar file making sure the JNI brige is in the java library path
 java -jar build/libs/JGaborator-0.7-all.jar 
 ~~~~~~~~
+
+
 
 ### Cross-Compilation of gaborator with Zig
 
@@ -115,20 +115,14 @@ The makefile contains similar instructions. To compile the mac version call `mak
 export JAVA_HOME=$(/usr/libexec/java_home) #optionally set the JAVA_HOME
 ~~~~~~~~
 
-There is a precompiled version for the M1 (aarch64) platform. 
-
-
-
 ## Docker
 
-There is a dockerfile provided to test jgaborator in docker. The provided dockerfile runs the Amazon Corretto JRE on LinuxKit.
-It is mainly used to test whether the correct JNI library is unpacked for more exotic platforms.
+There is a dockerfile provided to test JGaborator in docker. The provided dockerfile runs the Amazon Corretto JRE on LinuxKit. It is mainly used to test whether the correct JNI library is unpacked for more exotic platforms.
 
 ~~~~~~~~
 docker build -t jgaborator:0.7 media
 docker run jgaborator:0.7 /bin/bash -c "curl https://filesamples.com/samples/audio/mp3/sample3.mp3 --output sample.mp3  && java -jar jgaborator.jar sample.mp3"
 ~~~~~~~~
-
 
 ## License
 In the spirit of the packaged gaborator library this code is also licensed under an AGPL license.
