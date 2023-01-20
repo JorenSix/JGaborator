@@ -29,6 +29,76 @@ std::unordered_map<uintptr_t, uintptr_t> stateMap;
 //A mutex to ensure that writes to the stateMap are synchronized.
 std::mutex stateMutex;
 
+//from here
+long get_thread_id(JNIEnv * env){
+
+    // First, we have to find Thread class
+    jclass cls = env->FindClass("java/lang/Thread");
+
+    // Then, we can look for it's static method 'currentThread'
+    /* Remember that you can always get method signature using javap tool
+         > javap -s -p java.lang.Thread | grep -A 1 currentThread
+             public static native java.lang.Thread currentThread();
+               descriptor: ()Ljava/lang/Thread;
+    */
+    jmethodID mid =
+      env->GetStaticMethodID( cls, "currentThread", "()Ljava/lang/Thread;");
+
+    // Once you have method, you can call it. Remember that result is
+    // a jobject
+    jobject thread = env->CallStaticObjectMethod(cls, mid);
+    if( thread == NULL ) {
+      printf("Error while calling static method: currentThread\n");
+    }
+
+    // Now, we have to find another method - 'getId'
+    /* Remember that you can always get method signature using javap tool
+         > javap -s -p java.lang.Thread | grep -A 1 getId
+             public long getId();
+               descriptor: ()Jjavap -s -p java.lang.Thread | grep -A 1 currentThread
+    */
+    jmethodID mid_getid =
+      env->GetMethodID(cls, "getId", "()J");
+    if( mid_getid == NULL ) {
+      printf("Error while calling GetMethodID for: getId\n");
+    }
+
+    // This time, we are calling instance method, note the difference
+    // in Call... method
+    jlong tid = env->CallLongMethod(thread, mid_getid);
+
+    // Finally, let's call 'getName' of Thread object
+    /* Remember that you can always get method signature using javap tool
+         > javap -s -p java.lang.Thread | grep -A 1 getName
+             public final java.lang.String getName();
+               descriptor: ()Ljava/lang/String;
+    */
+    jmethodID mid_getname =
+      env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
+
+    if( mid_getname == NULL ) {
+      printf("Error while calling GetMethodID for: getName\n");
+    }
+
+    // As above, we are calling instance method
+    jstring tname =(jstring) env->CallObjectMethod( thread, mid_getname);
+
+    // Remember to retrieve characters from String object
+    const char *c_str;
+    c_str = env->GetStringUTFChars( tname, NULL);
+    if(c_str == NULL) {
+      printf("Error getting thread info\n");
+      return -7 ;
+    }
+
+    // display message from JNI
+    printf("[C   ] name: %s id: %ld\n", c_str, tid);
+
+    // and make sure to release allocated memory before leaving JNI
+    env->ReleaseStringUTFChars( tname, c_str);
+
+    return tid;
+}
 
 JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * env, jobject object, jint blocksize, jdouble fs, jint bands_per_octave, jdouble ff_min , jdouble ff_ref, jdouble ff_max, jdouble overlap, jdouble max_error){
    //Makes sure only one thread writes to the stateMap
@@ -36,6 +106,9 @@ JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * e
 
    GaboratorState * state =  new GaboratorState();
    uintptr_t env_addresss = reinterpret_cast<uintptr_t>(env);
+
+   //get_thread_id(env);
+   //printf("[C   ] address: %ld\n", env_addresss);
 
    state->paramsRef = new gaborator::parameters(bands_per_octave, ff_min / fs, ff_ref / fs, overlap, max_error);
    state->analyzerRef = new gaborator::analyzer<float>(*(state->paramsRef));
@@ -59,7 +132,6 @@ JNIEXPORT jint JNICALL Java_be_ugent_jgaborator_JGaborator_initialize(JNIEnv * e
    assert(stateMap.count(env_addresss)==0);
    stateMap[env_addresss] = state_addresss;
    assert(stateMap.count(env_addresss)==1);
- 
 
    assert(state->t_in == 0);
 
@@ -80,6 +152,9 @@ JNIEXPORT jfloatArray JNICALL Java_be_ugent_jgaborator_JGaborator_analyse(JNIEnv
       return NULL;
    }
    GaboratorState * state = reinterpret_cast<GaboratorState *>(stateMap[env_addresss]);
+
+   //get_thread_id(env);
+   //printf("[C   ] address: %ld\n", env_addresss);
 
    //
    // First Convert the incoming JNI jintarray to C's jfloat[]
